@@ -1,11 +1,14 @@
 {
-    "name": "Measurement Client",
-    "description": "This is a web browser based network performance measurement tool",
-    "devtools_page": "index.html",
-    "manifest_version": 3,
-    "version": "0.1",
-    "action": {
-        "default_icon": "img/extension-icon.png",
+    "manifest_version": 2,
+    "name": "Network Performance Logger",
+    "version": "1.0",
+    "permissions": ["webRequest", "webRequestBlocking", "storage", "tabs", "activeTab","*://www.google.com/*", "*://evernote.com/*", "*://www.ietf.org/","*://www.trustpilot.com/"],
+    "background": {
+      "scripts": ["background.js"],
+      "persistent": true
+    },
+    "browser_action": {
+        "default_icon": "extension-icon.png",
         "default_popup": "index.html"
     }
-}
+  }
