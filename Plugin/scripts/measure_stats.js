@@ -4,10 +4,12 @@ const urlsToOpen = [
   'https://www.google.com',
   'https://evernote.com',
   'https://www.ietf.org/',
-  'https://www.trustpilot.com/'
+  'https://www.trustpilot.com/',
 ];
 
 urlsOpened = []
+
+var testId = generateUUID();
 
 var s3_options = {
   endpoint: "http://localhost:9000",
@@ -44,11 +46,39 @@ chrome.runtime.onMessage.addListener(
         performanceDict[requestUrl]['statusCode'] = request.statusCode
       }
     }
-
+    if (request.action) {
+      console.log(`Action: ${request.action}`)
+      chrome.tabs.captureVisibleTab(null, { format: 'png' }, function(dataUrl) {
+        if (chrome.runtime.lastError) {
+          console.error(chrome.runtime.lastError.message);
+        } else {
+          fetch(dataUrl).then(response => response.blob()).then(blob => {
+            const filename = testId + "_bandwidthtest.png"
+            const file = new File([blob], filename, { type: 'image/png' });
+            
+            const params = {
+              Key: filename,
+              ContentType: 'image/png',
+              Body: file,
+              Bucket: "measurements", 
+            };
+    
+            // Upload the file to S3
+            s3.upload(params, function(err, data) {
+              if (err) {
+                console.error('S3 Upload Error:', err);
+              } else {
+                console.log('File uploaded successfully. S3 URL:', data.Location);
+              }
+            });
+            console.log('Screenshot captured');
+          });
+        }
+      });  
+    }
     if (urlsOpened.length == urlsToOpen.length) {
       console.log("All Urls opened!")
-      amzDate = getAmzDate(new Date().toISOString())
-      filename = amzDate + ".json"
+      filename = testId + ".json"
       var params = {
           Body: JSON.stringify(performanceDict), 
           Bucket: "measurements", 
@@ -59,56 +89,41 @@ chrome.runtime.onMessage.addListener(
           else     console.log(data)           // successful response
       })
     }
-
   }
 );
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+function runBandwidthTest() {
+    chrome.tabs.update({ url: "https://fast.com" })
+
+}
+
 
 async function startTest() {
-    // var s3_options = {
-    //     endpoint: "http://localhost:9000",
-    //     accessKeyId: "3PmJ12LmuYudiK4zyLpm",
-    //     secretAccessKey: "wYeUWJ9QkcAuYQdZ4ROmBzB3HhY9anLfZkIkndxh",
-    //     s3ForcePathStyle: 'true',
-    //     signatureVersion: 'v4'
-    // }
-    // var s3 = new AWS.S3(s3_options)
-    // s3.listBuckets(function(err, data) {
-    //     if (err) console.log(err, err.stack); // an error occurred
-    //     else     console.log(data);           // successful response
-    // })
     
     await getIPGeolocationData()
-    
+    chrome.browsingData.remove({
+      "origins": urlsToOpen
+    }, {
+      "appcache": true,
+      "cache": true,
+      "cacheStorage": true,
+      "localStorage": true,
+    }, function () {}
+    ); 
     openTabs()
-    
-    // amzDate = getAmzDate(new Date().toISOString())
-    // filename = amzDate + ".json"
-    // var params = {
-    //     Body: JSON.stringify(performanceDict), 
-    //     Bucket: "measurements", 
-    //     Key: filename, 
-    // }
-    // s3.putObject(params, function(err, data) {
-    //     if (err) console.log(err, err.stack) // an error occurred
-    //     else     console.log(data)           // successful response
-    // })
-
-    // var params = {
-    //     Body: JSON.stringify(performanceDict), 
-    //     Bucket: "measurements", 
-    //     Key: filename, 
-    // }
-    // s3.putObject(params, function(err, data) {
-    //     if (err) console.log(err, err.stack) // an error occurred
-    //     else     console.log(data)           // successful response
-    // })
-    
-
+    runBandwidthTest()
     console.log("Execution completed")
 }
 
@@ -175,7 +190,6 @@ function openTabs() {
           if (tabId === tab.id && changeInfo.status === 'complete') {
             // Remove the listener after the tab is fully loaded
             chrome.tabs.onUpdated.removeListener(listener);
-
             // Open the next tab
             openTabsRecursively(urls, index + 1);
           }
