@@ -12,6 +12,11 @@
       "matches": ["https://fast.com/"],
       "js": ["bandwidth_check.js"],
       "run_at": "document_end"
+    },
+    {
+      "matches": ["<all_urls>"],
+      "js": ["fetch_performancedata.js"],
+      "run_at": "document_start"
     }
   ],
   "browser_action": {

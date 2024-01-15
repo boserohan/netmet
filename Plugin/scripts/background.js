@@ -1,6 +1,6 @@
 let startTimeMap = {};
 
-url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/"]
+url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
 urls_completed = []
 
 chrome.webRequest.onBeforeRequest.addListener(
@@ -75,6 +75,8 @@ chrome.webRequest.onCompleted.addListener(
     console.log(`URL: ${startTimeData.requestUrl}`);
     console.log(`details : ${JSON.stringify(details)}`)
 
+
+
     // Send message to other extension components
     chrome.runtime.sendMessage(startTimeMap[requestId]);
 
@@ -130,10 +132,10 @@ chrome.webRequest.onErrorOccurred.addListener(
 );
 
 
-chrome.runtime.onMessage.addListener(
-    function(request, sender, sendResponse) {
-      // Log or use the received value
-      console.log(`Message from measure_stats.js about ${request.store_msm}`);
-      chrome.runtime.sendMessage(request);
-    }
-);
+// chrome.runtime.onMessage.addListener(
+//     function(request, sender, sendResponse) {
+//       // Log or use the received value
+//       console.log(`Message from measure_stats.js about ${JSON.stringify(request)}`);
+//       chrome.runtime.sendMessage(request);
+//     }
+// );

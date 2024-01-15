@@ -25,8 +25,9 @@ class DnsStats:
         self.timestamp = timestamp
 
 class CurlStats:
-    def __init__(self, initconnect_time, appconnect_time, pretransfer_time, redirect_time, starttransfer_time, 
+    def __init__(self, dnslookup_time,initconnect_time, appconnect_time, pretransfer_time, redirect_time, starttransfer_time, 
                  total_time, response_size, response_speed, url_effective, remote_ip, local_port, cdn_server_id_key, cdn_server_id_value):
+        self.dnslookup_time = dnslookup_time
         self.initconnect_time = initconnect_time
         self.appconnect_time = appconnect_time
         self.pretransfer_time = pretransfer_time
@@ -197,6 +198,8 @@ def curlWeb(domain_name, resolved_ip, iface) -> CurlStats:
         cdn_server_id_value = ""
         try:
             for line in result.stdout.splitlines():
+                if 'lookup' in line:
+                    dnslookup_time = float(line.split(":")[1])
                 if 'initconnect' in line:
                     initconnect_time = float(line.split(":")[1])
                 if 'appconnect' in line:
@@ -231,7 +234,7 @@ def curlWeb(domain_name, resolved_ip, iface) -> CurlStats:
         except Exception as e:
             print(f"Error parsing curl o/p: {e}")
         finally:
-            return CurlStats(initconnect_time,appconnect_time,pretransfer_time,
+            return CurlStats(dnslookup_time,initconnect_time,appconnect_time,pretransfer_time,
                          redirect_time,starttransfer_time,total_time,response_size,
                          response_speed,url_effective,remote_ip,local_port, cdn_server_id_key, cdn_server_id_value)
     else:

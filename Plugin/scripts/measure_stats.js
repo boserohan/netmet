@@ -7,6 +7,7 @@ const urlsToOpen = [
   'https://www.trustpilot.com/',
 ];
 
+
 urlsOpened = []
 
 var testId = generateUUID();
@@ -22,16 +23,19 @@ var s3 = new AWS.S3(s3_options)
 
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
+    console.log(`request: ${JSON.stringify(request)}`)
     // Log or use the received value
     if (request.status) {
       urlsOpened.push(request.requestUrl)
+      const requestUrl = request.requestUrl
       if (request.status == "success"){
-        requestUrl = request.requestUrl
-        performanceDict[requestUrl] = {}
+        if (!(requestUrl in performanceDict)) {
+          performanceDict[requestUrl] = {}
+        }
         performanceDict[requestUrl]['ip'] = request.ip
-        performanceDict[requestUrl]['ttfb'] = request.ttfb
-        performanceDict[requestUrl]['dlt'] = request.dlt
-        performanceDict[requestUrl]['plt'] = request.plt
+        // performanceDict[requestUrl]['ttfb'] = request.ttfb
+        // performanceDict[requestUrl]['dlt'] = request.dlt
+        // performanceDict[requestUrl]['plt'] = request.plt
         performanceDict[requestUrl]['statusCode'] = request.statusCode
         performanceDict[requestUrl]['status'] = request.status
         if (request.x_amz_cf_pop) {
@@ -46,6 +50,18 @@ chrome.runtime.onMessage.addListener(
         performanceDict[requestUrl]['statusCode'] = request.statusCode
       }
     }
+    if (request.performance) {
+      const currentUrl = request.performance
+      if (!(currentUrl in performanceDict)) {
+        performanceDict[currentUrl] = {}
+      }
+      performanceDict[currentUrl]['ttfb'] = request.ttfb
+      performanceDict[currentUrl]['latency'] = request.latency
+      performanceDict[currentUrl]['dnsLookupTime'] = request.dnsLookupTime
+      performanceDict[currentUrl]['tcpConnectTime'] = request.tcpConnectTime
+      performanceDict[currentUrl]['tlsNegotiationTime'] = request.tlsNegotiationTime
+      performanceDict[currentUrl]['transferSize'] = request.transferSize
+    } 
     if (request.action) {
       console.log(`Action: ${request.action}`)
       chrome.tabs.captureVisibleTab(null, { format: 'png' }, function(dataUrl) {
@@ -72,12 +88,23 @@ chrome.runtime.onMessage.addListener(
               }
             });
             console.log('Screenshot captured');
+            var ol_element = document.getElementById("test-progress-list")
+            ol_element.children[ol_element.childElementCount - 1].textContent = "Running Speed Test......Done";
+            if (!(document.getElementById("test-completed"))) {
+              var steps_element = document.getElementById("progress-steps")
+              var completed_element = document.createElement('li')
+              completed_element.textContent = "Test Completed"
+              completed_element.id = "test-completed"
+              steps_element.appendChild(completed_element)
+
+              // chrome.tabs.update({ url: "show_progress.html" })
+            }
           });
         }
       });  
     }
     if (urlsOpened.length == urlsToOpen.length) {
-      console.log("All Urls opened!")
+      // console.log("All Urls opened!")
       filename = testId + ".json"
       var params = {
           Body: JSON.stringify(performanceDict), 
@@ -105,27 +132,10 @@ function sleep(ms) {
 }
 
 function runBandwidthTest() {
-    chrome.tabs.update({ url: "https://fast.com" })
-
+  console.log("Bandwidth test started")
+  chrome.tabs.update({ url: "https://fast.com" })
 }
 
-
-async function startTest() {
-    
-    await getIPGeolocationData()
-    chrome.browsingData.remove({
-      "origins": urlsToOpen
-    }, {
-      "appcache": true,
-      "cache": true,
-      "cacheStorage": true,
-      "localStorage": true,
-    }, function () {}
-    ); 
-    openTabs()
-    runBandwidthTest()
-    console.log("Execution completed")
-}
 
 // this function converts the generic JS ISO8601 date format to the specific format the AWS API wants
 function getAmzDate(dateStr) {
@@ -140,6 +150,13 @@ function getAmzDate(dateStr) {
 }
 
 async function getIPGeolocationData() {
+    // console.log(`Sending message to tab: ${progressTab}`)
+    // chrome.tabs.sendMessage(progressTab,{update: "Retrieving IP and geolocation...", step: "New"})
+    ol_element = document.getElementById("test-progress-list")
+    var ipretrievalStep = document.createElement('li')
+    ipretrievalStep.textContent = "Retrieving IP and geolocation..."
+    ol_element.appendChild(ipretrievalStep)
+
     url = 'http://ip-api.com/json/'
     const ipRequest = new Request(url)
     const response = await fetch(ipRequest, {cache: "no-store"})
@@ -165,44 +182,104 @@ async function getIPGeolocationData() {
     observer.observe({ type: "resource", buffered: true })
     console.log(ipJsonDetails)
 
-    const section = document.querySelector("section")
-    const ipDivHeader = document.createElement("h1")
-    ipDivHeader.textContent = "Your IP Details"
+    // const section = document.querySelector("section")
+    // const ipDivHeader = document.createElement("h1")
+    // ipDivHeader.textContent = "Your IP Details"
 
-    const myIPDetails = document.createElement("p")
-    myIPDetails.textContent = `IP Address: ${ipJsonDetails.query} // City: ${ipJsonDetails.city} // ISP: ${ipJsonDetails.as}`
+    // const myIPDetails = document.createElement("p")
+    // myIPDetails.textContent = `IP Address: ${ipJsonDetails.query} // City: ${ipJsonDetails.city} // ISP: ${ipJsonDetails.as}`
     
 
-    ipDivHeader.appendChild(myIPDetails);
-    section.appendChild(ipDivHeader)
-
+    // ipDivHeader.appendChild(myIPDetails);
+    // section.appendChild(ipDivHeader)
+    // chrome.tabs.sendMessage(progressTabId,{update: "Retrieving IP and geolocation...Done", step: "Same"})
+    
+    ol_element.children[ol_element.childElementCount - 1].textContent = "Retrieving IP and geolocation...Done";
 
 }
 
-function openTabs() {
+function openTabsRecursively(urls, index) {
+  if (index < urls.length) {
+    chrome.tabs.create({ url: urls[index], active: false }, function(tab) {
+      // Listen for tab updates to detect when the tab is fully loaded
+      // console.log(`Sending message to tab: ${progressTabId}`)
+      // chrome.tabs.sendMessage(progressTabId,{update: `Fetching ${requestUrl}...`, step: "New"})
+      console.log(`Creating tab for:  ${urls[index]}`)
+      sitelist_element = document.getElementById("website-list")
+      var webSiteNameItem = document.createElement('li')
+      webSiteNameItem.textContent = urls[index]
+      sitelist_element.appendChild(webSiteNameItem)
 
-  // Function to open tabs recursively
-  const openTabsRecursively = (urls, index) => {
-    if (index < urls.length) {
-      chrome.tabs.create({ url: urls[index], active: false }, function(tab) {
-        // Listen for tab updates to detect when the tab is fully loaded
-        chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
-          if (tabId === tab.id && changeInfo.status === 'complete') {
-            // Remove the listener after the tab is fully loaded
-            chrome.tabs.onUpdated.removeListener(listener);
-            // Open the next tab
-            openTabsRecursively(urls, index + 1);
-          }
-        });
+      var siteList = document.createElement('ul')
+      chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+        if (tabId === tab.id && changeInfo.status === 'complete') {
+          // Remove the listener after the tab is fully loaded
+          chrome.tabs.onUpdated.removeListener(listener);
+          chrome.tabs.remove(tabId, function() {
+            console.log(`${tab.url} closed`)
+          })
+          
+          // Open the next tab
+          openTabsRecursively(urls, index + 1);
+        }
       });
-    }
-  };
+    });
+  }
+  else if (index === urls.length) {
+    ol_element = document.getElementById("test-progress-list")
+    var bwStep = document.createElement('li')
+    bwStep.textContent = "Running Speed Test..."
+    ol_element.appendChild(bwStep)
+    runBandwidthTest()
+  }
+}
 
+function openTabs() {
+  // const openTabsRecursively = (urls, index) => {
+    
+  // };
   // Start opening tabs
+  ol_element = document.getElementById("test-progress-list")
+  var fetchWebStep = document.createElement('li')
+  fetchWebStep.textContent = "Fetching the following websites:"
+  ol_element.appendChild(fetchWebStep)
+  var siteList = document.createElement('ul')
+  siteList.id = "website-list"
+  fetchWebStep.appendChild(siteList)
   openTabsRecursively(urlsToOpen, 0);
   chrome.runtime.sendMessage({"store_msm": 1})
 }
 
-startTest()
 
 
+async function testSteps(){
+  // const xhr = new XMLHttpRequest();
+  // xhr.open('GET', chrome.extension.getURL('show_progress.html'), true);
+  // xhr.send()
+  
+  chrome.browsingData.remove({
+    "origins": urlsToOpen
+  }, {
+    "appcache": true,
+    "cache": true,
+    "cacheStorage": true,
+    "localStorage": true,
+  }, function () {}
+  );
+
+  // await chrome.tabs.update({ url: "show_progress.html" }, function(tab) {
+  //   progressTabId = tab.id
+  //   console.log(`progressTabId: ${progressTabId}`)
+    
+  // })
+  
+  await getIPGeolocationData()
+  
+  
+  openTabs()
+  
+
+  console.log("All steps run")
+}
+
+testSteps()
