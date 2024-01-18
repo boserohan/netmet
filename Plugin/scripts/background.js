@@ -1,11 +1,79 @@
 let startTimeMap = {};
-
-url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
+var capturedSpeedTestId = false
+var capturedSpeedTestServerIP = false
+// url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
+url_list = [
+  '*://www.datadoghq.com/',
+  '*://gamewith.jp/',
+  '*://hbr.org/',
+  '*://www.trustpilot.com/',
+  '*://www.healthline.com/',
+  '*://dto.to/',
+  '*://www.bmj.com/',
+  '*://www.patreon.com/',
+  '*://www.zoom.us/',
+  '*://tubidy.cool/',
+  '*://speed.cloudflare.com/*'
+];
+// https://speed.cloudflare.com/__down*
 urls_completed = []
+
+let navigationStart;
+let domContentLoadedTime;
+let pageLoadTime;
+
+chrome.webNavigation.onBeforeNavigate.addListener(details => {
+  // Capture the navigation start time
+  navigationStart = details.timeStamp;
+  domContentLoadedTime = undefined;
+  pageLoadTime = undefined;
+});
+
+chrome.webNavigation.onDOMContentLoaded.addListener(details => {
+  // Capture the DOMContentLoaded time
+  domContentLoadedTime = details.timeStamp;
+  // calculatePageLoadTime();
+});
+
+chrome.webNavigation.onCompleted.addListener(details => {
+  // Capture the onCompleted time
+  pageLoadTime = details.timeStamp;
+  calculatePageLoadTime(details.url);
+});
+
+function calculatePageLoadTime(url) {
+  // Calculate the page load time when both DOMContentLoaded and onCompleted events are captured
+  if (domContentLoadedTime !== undefined && pageLoadTime !== undefined) {
+    const loadTime = pageLoadTime - navigationStart;
+    console.log(`${url} Page load time: ${loadTime} milliseconds`);
+  }
+}
 
 chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
     url = details.url
+    console.log(`onBeforeRequest URL: ${details.url}`);
+    // if (!capturedSpeedTestId) {
+    //   if (details.url.includes('https://speed.cloudflare.com/__down?')) {
+    //     const url = new URL(details.url);
+    //     const queryString = url.search.substring(1); // Exclude the leading "?"
+        
+    //     // Parse the query string into an object
+    //     const queryParams = {};
+    //     queryString.split('&').forEach(function(param) {
+    //       const keyValue = param.split('=');
+    //       const key = decodeURIComponent(keyValue[0]);
+    //       const value = keyValue.length > 1 ? decodeURIComponent(keyValue[1]) : null;
+    //       queryParams[key] = value;
+    //     });
+
+    //     // Do something with the query parameters
+    //     console.log("Cloudflare Speed Test")
+    //     console.log('Query Parameters:', queryParams);
+    //     capturedSpeedTestId = true
+
+    //   }
+    // }
   },
   { urls: url_list },
   ["blocking"]
@@ -13,6 +81,9 @@ chrome.webRequest.onBeforeRequest.addListener(
 
 chrome.webRequest.onSendHeaders.addListener(
     function (details) {
+      if (details.url.includes('speed.cloudflare.com')) {
+        return;
+      }
         startTimeMap[details.requestId] = {
               startTime: details.timeStamp,
               requestUrl: details.url,
@@ -23,6 +94,9 @@ chrome.webRequest.onSendHeaders.addListener(
 
 chrome.webRequest.onBeforeRedirect.addListener(
   function (details) {
+    if (details.url.includes('speed.cloudflare.com')) {
+      return;
+    }
     const requestId = details.requestId;
     const startTimeData = startTimeMap[requestId];
 
@@ -30,13 +104,17 @@ chrome.webRequest.onBeforeRedirect.addListener(
       return;
     }
 
-    console.log(`URL: ${startTimeData.requestUrl}`);
+    console.log(`Redirected URL: ${startTimeData.requestUrl} to ${details.url}`);
   },
   { urls: url_list }
 );
 
 chrome.webRequest.onResponseStarted.addListener(
     function (details) {
+        if (details.url.includes('speed.cloudflare.com')) {
+          return;
+        }
+
         const requestId = details.requestId;
         const startTimeData = startTimeMap[requestId];
     
@@ -56,6 +134,17 @@ chrome.webRequest.onResponseStarted.addListener(
 
 chrome.webRequest.onCompleted.addListener(
   function (details) {
+    if (details.url.includes('speed.cloudflare.com')) {
+      if (!capturedSpeedTestServerIP) {
+        if (details.url.includes('https://speed.cloudflare.com/__down?')) { 
+        const server_ip = details.ip
+        console.log(`Speed Test Server IP: ${server_ip}`)
+        chrome.runtime.sendMessage({speedTest: { serverIP: server_ip}})
+        }
+      capturedSpeedTestServerIP = true
+      }
+      return;
+    }
     const requestId = details.requestId;
     const startTimeData = startTimeMap[requestId];
 
@@ -86,6 +175,9 @@ chrome.webRequest.onCompleted.addListener(
 
 chrome.webRequest.onHeadersReceived.addListener(
     function(details) {
+      if (details.url.includes('speed.cloudflare.com')) {
+        return;
+      }
       // Iterate through response headers
       for (const header of details.responseHeaders) {
         if (header.name.toLowerCase() === 'x-amz-cf-pop') {
@@ -123,6 +215,9 @@ chrome.webRequest.onHeadersReceived.addListener(
 
 chrome.webRequest.onErrorOccurred.addListener(
   function (details) {
+    if (details.url.includes('speed.cloudflare.com')) {
+      return;
+    }
     console.error('Error:', details.error);
     // delete startTimeMap[details.requestId];
     startTimeMap[details.requestId].status = "fail";

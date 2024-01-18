@@ -1,14 +1,22 @@
-
 var performanceDict = new Object()
-const urlsToOpen = [
-  'https://www.google.com',
-  'https://evernote.com',
-  'https://www.ietf.org/',
+var speedTestResult = new Object()
+var ipDetails = new Object()
+
+const urlList = [
+  'https://www.datadoghq.com/',
+  'https://gamewith.jp/',
+  'https://hbr.org/',
   'https://www.trustpilot.com/',
+  'https://www.healthline.com/',
+  'https://dto.to/',
+  'https://www.bmj.com/',
+  'https://www.patreon.com/',
+  'https://www.zoom.us/',
+  'https://tubidy.cool/'
 ];
 
 
-urlsOpened = []
+var urlsOpened = []
 
 var testId = generateUUID();
 
@@ -24,9 +32,11 @@ var s3 = new AWS.S3(s3_options)
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(`request: ${JSON.stringify(request)}`)
+    
     // Log or use the received value
     if (request.status) {
       urlsOpened.push(request.requestUrl)
+      console.log(urlsOpened)
       const requestUrl = request.requestUrl
       if (request.status == "success"){
         if (!(requestUrl in performanceDict)) {
@@ -62,62 +72,85 @@ chrome.runtime.onMessage.addListener(
       performanceDict[currentUrl]['tlsNegotiationTime'] = request.tlsNegotiationTime
       performanceDict[currentUrl]['transferSize'] = request.transferSize
     } 
-    if (request.action) {
-      console.log(`Action: ${request.action}`)
-      chrome.tabs.captureVisibleTab(null, { format: 'png' }, function(dataUrl) {
-        if (chrome.runtime.lastError) {
-          console.error(chrome.runtime.lastError.message);
-        } else {
-          fetch(dataUrl).then(response => response.blob()).then(blob => {
-            const filename = testId + "_bandwidthtest.png"
-            const file = new File([blob], filename, { type: 'image/png' });
-            
-            const params = {
-              Key: filename,
-              ContentType: 'image/png',
-              Body: file,
-              Bucket: "measurements", 
-            };
-    
-            // Upload the file to S3
-            s3.upload(params, function(err, data) {
-              if (err) {
-                console.error('S3 Upload Error:', err);
-              } else {
-                console.log('File uploaded successfully. S3 URL:', data.Location);
-              }
-            });
-            console.log('Screenshot captured');
-            var ol_element = document.getElementById("test-progress-list")
-            ol_element.children[ol_element.childElementCount - 1].textContent = "Running Speed Test......Done";
-            if (!(document.getElementById("test-completed"))) {
-              var steps_element = document.getElementById("progress-steps")
-              var completed_element = document.createElement('li')
-              completed_element.textContent = "Test Completed"
-              completed_element.id = "test-completed"
-              steps_element.appendChild(completed_element)
-
-              // chrome.tabs.update({ url: "show_progress.html" })
-            }
-          });
-        }
-      });  
-    }
-    if (urlsOpened.length == urlsToOpen.length) {
-      // console.log("All Urls opened!")
-      filename = testId + ".json"
-      var params = {
-          Body: JSON.stringify(performanceDict), 
-          Bucket: "measurements", 
-          Key: filename, 
+    if (request.speedTest) {
+      speedTestDict = request.speedTest
+      if (speedTestDict.serverIP) {
+        speedTestResult['serverIP'] = speedTestDict.serverIP
       }
-      s3.putObject(params, function(err, data) {
-          if (err) console.log(err, err.stack) // an error occurred
-          else     console.log(data)           // successful response
-      })
     }
+    // if (request.action) {
+    //   console.log(`Action: ${request.action}`)
+    //   chrome.tabs.captureVisibleTab(null, { format: 'png' }, function(dataUrl) {
+    //     if (chrome.runtime.lastError) {
+    //       console.error(chrome.runtime.lastError.message);
+    //     } else {
+    //       fetch(dataUrl).then(response => response.blob()).then(blob => {
+    //         const filename = testId + "_bandwidthtest.png"
+    //         const file = new File([blob], filename, { type: 'image/png' });
+            
+    //         const params = {
+    //           Key: filename,
+    //           ContentType: 'image/png',
+    //           Body: file,
+    //           Bucket: "measurements", 
+    //         };
+    
+    //         // Upload the file to S3
+    //         s3.upload(params, function(err, data) {
+    //           if (err) {
+    //             console.error('S3 Upload Error:', err);
+    //           } else {
+    //             console.log('File uploaded successfully. S3 URL:', data.Location);
+    //           }
+    //         });
+    //         console.log('Screenshot captured');
+    //         var ol_element = document.getElementById("test-progress-list")
+    //         ol_element.children[ol_element.childElementCount - 1].textContent = "Running Speed Test......Done";
+    //         if (!(document.getElementById("test-completed"))) {
+    //           var steps_element = document.getElementById("progress-steps")
+    //           var completed_element = document.createElement('li')
+    //           completed_element.textContent = "Test Completed"
+    //           completed_element.id = "test-completed"
+    //           steps_element.appendChild(completed_element)
+
+    //           // chrome.tabs.update({ url: "show_progress.html" })
+    //         }
+    //       });
+    //     }
+    //   });  
+    // }
+    // if (urlsOpened.length == urlList.length) {
+    //   // console.log("All Urls opened!")
+    //   filename = testId + ".json"
+    //   var params = {
+    //       Body: JSON.stringify(performanceDict), 
+    //       Bucket: "measurements", 
+    //       Key: filename, 
+    //   }
+    //   s3.putObject(params, function(err, data) {
+    //       if (err) console.log(err, err.stack) // an error occurred
+    //       else     console.log(data)           // successful response
+    //   })
+    // }
   }
 );
+
+function savePerformanceStats() {
+    var completeTestObj = new Object()
+    completeTestObj['web_browsing'] = performanceDict
+    completeTestObj['speed_test'] = speedTestResult
+    filename = testId + ".json"
+    var params = {
+        Body: JSON.stringify(completeTestObj), 
+        Bucket: "measurements", 
+        Key: filename, 
+    }
+    console.log("Saving performance stats to object storage")
+    s3.putObject(params, function(err, data) {
+        if (err) console.log(err, err.stack) // an error occurred
+        else     console.log(data)           // successful response
+    })
+}
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -129,11 +162,6 @@ function generateUUID() {
 
 function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function runBandwidthTest() {
-  console.log("Bandwidth test started")
-  chrome.tabs.update({ url: "https://fast.com" })
 }
 
 
@@ -161,25 +189,25 @@ async function getIPGeolocationData() {
     const ipRequest = new Request(url)
     const response = await fetch(ipRequest, {cache: "no-store"})
     const ipJsonDetails = await response.json()
-    const observer = new PerformanceObserver((list) => {
-        console.log('Performance Entries upcoming')
-        // performanceDict[url] = {}
+    // const observer = new PerformanceObserver((list) => {
+    //     console.log('Performance Entries upcoming')
+    //     // performanceDict[url] = {}
         
-        list.getEntries().forEach((entry) => {
-          console.log('Entry Timings:')
-          console.log(`Entry: ${entry.name}, Duration: ${entry.duration}`)
-          // performanceDict[url][entry.name] = entry.duration
-          const requestTime = entry.responseStart - entry.requestStart
+    //     list.getEntries().forEach((entry) => {
+    //       console.log('Entry Timings:')
+    //       console.log(`Entry: ${entry.name}, Duration: ${entry.duration}`)
+    //       // performanceDict[url][entry.name] = entry.duration
+    //       const requestTime = entry.responseStart - entry.requestStart
           
-          if (requestTime > 0) {
-            console.log(`${entry.name}: Request time: ${requestTime}ms`)
-            // performanceDict[url][entry.name] = requestTime
+    //       if (requestTime > 0) {
+    //         console.log(`${entry.name}: Request time: ${requestTime}ms`)
+    //         // performanceDict[url][entry.name] = requestTime
             
-          }
-        })
-    })
+    //       }
+    //     })
+    // })
       
-    observer.observe({ type: "resource", buffered: true })
+    // observer.observe({ type: "resource", buffered: true })
     console.log(ipJsonDetails)
 
     // const section = document.querySelector("section")
@@ -196,6 +224,50 @@ async function getIPGeolocationData() {
     
     ol_element.children[ol_element.childElementCount - 1].textContent = "Retrieving IP and geolocation...Done";
 
+}
+
+function runSpeedTest(bwStep) {
+
+  window.speedTestEngine.play()
+  console.log("Speed Test Started.. Please wait")
+  window.speedTestEngine.onFinish = speedTestRawResult => {
+    console.log(`Speed Test Summary: ${speedTestRawResult.getSummary()}`)
+    console.log(`Speed Test Score: ${speedTestRawResult.getScores()}`)
+
+    // speedTestResult = {
+    //   unloadedLatency: speedTestRawResult.getUnloadedLatency(),
+    //   unloadedJitter: speedTestRawResult.getUnloadedJitter(),
+    //   downloadedLatency: speedTestRawResult.getDownLoadedLatency(),
+    //   downloadedJitter: speedTestRawResult.getDownLoadedJitter(),
+    //   upLoadedLatency: speedTestRawResult.getUpLoadedLatency(),
+    //   upLoadedJitter: speedTestRawResult.getUpLoadedJitter(),
+    //   downloadedBandwidth: speedTestRawResult.getDownloadBandwidth(),
+    //   uploadBandwidth: speedTestRawResult.getUploadBandwidth(),
+    //   packetLoss: speedTestRawResult.getPacketLoss(),
+    // }
+    speedTestResult['unloadedLatency'] = speedTestRawResult.getUnloadedLatency()
+    speedTestResult['unloadedJitter'] = speedTestRawResult.getUnloadedJitter()
+    speedTestResult['downloadedLatency'] = speedTestRawResult.getDownLoadedLatency()
+    speedTestResult['downloadedJitter'] = speedTestRawResult.getDownLoadedJitter()
+    speedTestResult['upLoadedLatency'] = speedTestRawResult.getUpLoadedLatency()
+    speedTestResult['upLoadedJitter'] = speedTestRawResult.getUpLoadedJitter()
+    speedTestResult['downloadedBandwidth'] = speedTestRawResult.getDownloadBandwidth()
+    speedTestResult['uploadBandwidth'] = speedTestRawResult.getUploadBandwidth()
+    speedTestResult['packetLoss'] = speedTestRawResult.getPacketLoss()
+
+    savePerformanceStats()
+    bwStep.textContent = "Running Speed Test......Done"
+    console.log("Speed Test Completed")
+  };
+
+  window.speedTestEngine.onError = (e) => {
+    console.log(e);
+    speedTestResult['error'] =  e 
+    savePerformanceStats()
+    bwStep.textContent = "Running Speed Test......failed"
+    console.log("Speed Test Failed")
+  }
+  
 }
 
 function openTabsRecursively(urls, index) {
@@ -230,7 +302,8 @@ function openTabsRecursively(urls, index) {
     var bwStep = document.createElement('li')
     bwStep.textContent = "Running Speed Test..."
     ol_element.appendChild(bwStep)
-    runBandwidthTest()
+    runSpeedTest(bwStep)
+    // chrome.runtime.sendMessage({speedTest: "run"})
   }
 }
 
@@ -246,7 +319,7 @@ function openTabs() {
   var siteList = document.createElement('ul')
   siteList.id = "website-list"
   fetchWebStep.appendChild(siteList)
-  openTabsRecursively(urlsToOpen, 0);
+  openTabsRecursively(urlList, 0);
   chrome.runtime.sendMessage({"store_msm": 1})
 }
 
@@ -258,7 +331,7 @@ async function testSteps(){
   // xhr.send()
   
   chrome.browsingData.remove({
-    "origins": urlsToOpen
+    "origins": urlList
   }, {
     "appcache": true,
     "cache": true,
