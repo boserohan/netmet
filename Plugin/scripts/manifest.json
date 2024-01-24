@@ -2,7 +2,7 @@
   "manifest_version": 2,
   "name": "Network Performance Logger",
   "version": "1.0",
-  "permissions": ["webRequest", "webRequestBlocking", "webNavigation","storage", "tabs", "activeTab", "browsingData","*://www.google.com/*", "*://evernote.com/*", "*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/*", "*://fast.com/#", "https://cdn.skypack.dev/", "<all_urls>"],
+  "permissions": ["webRequest", "webRequestBlocking", "webNavigation","storage", "alarms", "tabs", "activeTab", "browsingData","*://www.google.com/*", "*://evernote.com/*", "*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/*", "*://fast.com/#", "https://cdn.skypack.dev/", "<all_urls>"],
   "content_security_policy": "script-src 'self' https://cdn.skypack.dev/; object-src 'self'",
   "background": {
     "scripts": ["background.js"],

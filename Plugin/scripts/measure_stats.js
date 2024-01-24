@@ -20,13 +20,23 @@ var urlsOpened = []
 
 var testId = generateUUID();
 
+
+// const script = document.createElement('script');
+// script.src = "aws-sdk-2.1529.0.min.js"
+// document.body.appendChild(script);
+
 var s3_options = {
   endpoint: "http://localhost:9000",
-  accessKeyId: "3PmJ12LmuYudiK4zyLpm",
-  secretAccessKey: "wYeUWJ9QkcAuYQdZ4ROmBzB3HhY9anLfZkIkndxh",
+  accessKeyId: "KxxAZdvGZWZFY5wLWldz",
+  secretAccessKey: "SKVVsgEWC7R0dxXx85s62fPqusAlXZ4NbmXSmCdy",
   s3ForcePathStyle: 'true',
   signatureVersion: 'v4'
 }
+
+// script.onload = function() {
+  // s3 = new AWS.S3(s3_options)
+// }
+
 var s3 = new AWS.S3(s3_options)
 
 chrome.runtime.onMessage.addListener(
@@ -77,6 +87,9 @@ chrome.runtime.onMessage.addListener(
       if (speedTestDict.serverIP) {
         speedTestResult['serverIP'] = speedTestDict.serverIP
       }
+    }
+    if (request.startTest) {
+      testSteps()
     }
     // if (request.action) {
     //   console.log(`Action: ${request.action}`)
@@ -136,6 +149,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 function savePerformanceStats() {
+    
     var completeTestObj = new Object()
     completeTestObj['web_browsing'] = performanceDict
     completeTestObj['speed_test'] = speedTestResult
@@ -180,6 +194,8 @@ function getAmzDate(dateStr) {
 async function getIPGeolocationData() {
     // console.log(`Sending message to tab: ${progressTab}`)
     // chrome.tabs.sendMessage(progressTab,{update: "Retrieving IP and geolocation...", step: "New"})
+    
+    // STATUS UPDATES
     ol_element = document.getElementById("test-progress-list")
     var ipretrievalStep = document.createElement('li')
     ipretrievalStep.textContent = "Retrieving IP and geolocation..."
@@ -231,33 +247,39 @@ function runSpeedTest(bwStep) {
   window.speedTestEngine.play()
   console.log("Speed Test Started.. Please wait")
   window.speedTestEngine.onFinish = speedTestRawResult => {
-    console.log(`Speed Test Summary: ${speedTestRawResult.getSummary()}`)
-    console.log(`Speed Test Score: ${speedTestRawResult.getScores()}`)
+  console.log(`Speed Test Summary: ${speedTestRawResult.getSummary()}`)
+  console.log(`Speed Test Score: ${speedTestRawResult.getScores()}`)
 
-    // speedTestResult = {
-    //   unloadedLatency: speedTestRawResult.getUnloadedLatency(),
-    //   unloadedJitter: speedTestRawResult.getUnloadedJitter(),
-    //   downloadedLatency: speedTestRawResult.getDownLoadedLatency(),
-    //   downloadedJitter: speedTestRawResult.getDownLoadedJitter(),
-    //   upLoadedLatency: speedTestRawResult.getUpLoadedLatency(),
-    //   upLoadedJitter: speedTestRawResult.getUpLoadedJitter(),
-    //   downloadedBandwidth: speedTestRawResult.getDownloadBandwidth(),
-    //   uploadBandwidth: speedTestRawResult.getUploadBandwidth(),
-    //   packetLoss: speedTestRawResult.getPacketLoss(),
-    // }
-    speedTestResult['unloadedLatency'] = speedTestRawResult.getUnloadedLatency()
-    speedTestResult['unloadedJitter'] = speedTestRawResult.getUnloadedJitter()
-    speedTestResult['downloadedLatency'] = speedTestRawResult.getDownLoadedLatency()
-    speedTestResult['downloadedJitter'] = speedTestRawResult.getDownLoadedJitter()
-    speedTestResult['upLoadedLatency'] = speedTestRawResult.getUpLoadedLatency()
-    speedTestResult['upLoadedJitter'] = speedTestRawResult.getUpLoadedJitter()
-    speedTestResult['downloadedBandwidth'] = speedTestRawResult.getDownloadBandwidth()
-    speedTestResult['uploadBandwidth'] = speedTestRawResult.getUploadBandwidth()
-    speedTestResult['packetLoss'] = speedTestRawResult.getPacketLoss()
+  // speedTestResult = {
+  //   unloadedLatency: speedTestRawResult.getUnloadedLatency(),
+  //   unloadedJitter: speedTestRawResult.getUnloadedJitter(),
+  //   downloadedLatency: speedTestRawResult.getDownLoadedLatency(),
+  //   downloadedJitter: speedTestRawResult.getDownLoadedJitter(),
+  //   upLoadedLatency: speedTestRawResult.getUpLoadedLatency(),
+  //   upLoadedJitter: speedTestRawResult.getUpLoadedJitter(),
+  //   downloadedBandwidth: speedTestRawResult.getDownloadBandwidth(),
+  //   uploadBandwidth: speedTestRawResult.getUploadBandwidth(),
+  //   packetLoss: speedTestRawResult.getPacketLoss(),
+  // }
+  speedTestResult['unloadedLatency'] = speedTestRawResult.getUnloadedLatency()
+  speedTestResult['unloadedJitter'] = speedTestRawResult.getUnloadedJitter()
+  speedTestResult['downloadedLatency'] = speedTestRawResult.getDownLoadedLatency()
+  speedTestResult['downloadedJitter'] = speedTestRawResult.getDownLoadedJitter() 
+  speedTestResult['upLoadedLatency'] = speedTestRawResult.getUpLoadedLatency()
+  speedTestResult['upLoadedJitter'] = speedTestRawResult.getUpLoadedJitter()
+  speedTestResult['downloadedBandwidth'] = speedTestRawResult.getDownloadBandwidth()
+  speedTestResult['uploadBandwidth'] = speedTestRawResult.getUploadBandwidth()
+  speedTestResult['packetLoss'] = speedTestRawResult.getPacketLoss()
 
-    savePerformanceStats()
-    bwStep.textContent = "Running Speed Test......Done"
-    console.log("Speed Test Completed")
+  savePerformanceStats()
+  bwStep.textContent = "Running Speed Test......Done"
+  console.log("Speed Test Completed")
+
+  var steps_element = document.getElementById("progress-steps")
+  var completed_element = document.createElement('li')
+  completed_element.textContent = "Test Completed"
+  completed_element.id = "test-completed"
+  steps_element.appendChild(completed_element)
   };
 
   window.speedTestEngine.onError = (e) => {
@@ -266,23 +288,30 @@ function runSpeedTest(bwStep) {
     savePerformanceStats()
     bwStep.textContent = "Running Speed Test......failed"
     console.log("Speed Test Failed")
+    var steps_element = document.getElementById("progress-steps")
+    var completed_element = document.createElement('li')
+    completed_element.textContent = "Test Completed"
+    completed_element.id = "test-completed"
+    steps_element.appendChild(completed_element)
   }
   
 }
 
-function openTabsRecursively(urls, index) {
+function openTabsRecursively(newWindowId, urls, index) {
   if (index < urls.length) {
-    chrome.tabs.create({ url: urls[index], active: false }, function(tab) {
+    chrome.tabs.create({ url: urls[index], active: false, windowId: newWindowId }, function(tab) {
       // Listen for tab updates to detect when the tab is fully loaded
       // console.log(`Sending message to tab: ${progressTabId}`)
       // chrome.tabs.sendMessage(progressTabId,{update: `Fetching ${requestUrl}...`, step: "New"})
       console.log(`Creating tab for:  ${urls[index]}`)
+
+      // STATUS UPDATES
       sitelist_element = document.getElementById("website-list")
       var webSiteNameItem = document.createElement('li')
       webSiteNameItem.textContent = urls[index]
       sitelist_element.appendChild(webSiteNameItem)
-
       var siteList = document.createElement('ul')
+
       chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
         if (tabId === tab.id && changeInfo.status === 'complete') {
           // Remove the listener after the tab is fully loaded
@@ -292,12 +321,13 @@ function openTabsRecursively(urls, index) {
           })
           
           // Open the next tab
-          openTabsRecursively(urls, index + 1);
+          openTabsRecursively(newWindowId, urls, index + 1);
         }
       });
     });
   }
   else if (index === urls.length) {
+    // STATUS UPDATES
     ol_element = document.getElementById("test-progress-list")
     var bwStep = document.createElement('li')
     bwStep.textContent = "Running Speed Test..."
@@ -312,6 +342,8 @@ function openTabs() {
     
   // };
   // Start opening tabs
+
+  // STATUS UPDATES
   ol_element = document.getElementById("test-progress-list")
   var fetchWebStep = document.createElement('li')
   fetchWebStep.textContent = "Fetching the following websites:"
@@ -319,7 +351,16 @@ function openTabs() {
   var siteList = document.createElement('ul')
   siteList.id = "website-list"
   fetchWebStep.appendChild(siteList)
-  openTabsRecursively(urlList, 0);
+  // var newWindow = window.open('', '_blank');
+  chrome.windows.create({
+    type: 'normal',
+    focused: false
+  }, function(newWindow) {
+    // Access the ID of the new window
+    openTabsRecursively(newWindow.id, urlList, 0);
+    // console.log('New window ID:', newWindow.id);
+  });
+  
   chrome.runtime.sendMessage({"store_msm": 1})
 }
 
@@ -329,6 +370,8 @@ async function testSteps(){
   // const xhr = new XMLHttpRequest();
   // xhr.open('GET', chrome.extension.getURL('show_progress.html'), true);
   // xhr.send()
+
+
   
   chrome.browsingData.remove({
     "origins": urlList
@@ -348,11 +391,28 @@ async function testSteps(){
   
   await getIPGeolocationData()
   
-  
   openTabs()
-  
-
+ 
   console.log("All steps run")
 }
 
-testSteps()
+// testSteps()
+
+// const intervalId = setInterval(testSteps, 120000);
+
+// chrome.runtime.onSuspend.addListener(function() {
+//   clearInterval(intervalId);
+// });
+
+var exBtn = document.getElementById('executeTestBtn');
+
+exBtn.addEventListener('click', function() {
+  // Code to be executed when the button is clicked
+  exBtn.disabled = true
+  testSteps()
+  // You can add more code here based on your requirements
+});
+
+console.log("measure_stats.js loaded")
+
+

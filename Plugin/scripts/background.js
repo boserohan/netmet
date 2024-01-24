@@ -234,3 +234,44 @@ chrome.webRequest.onErrorOccurred.addListener(
 //       chrome.runtime.sendMessage(request);
 //     }
 // );
+
+// function startTest() {
+//   console.log("Starting Test...")
+//   chrome.runtime.sendMessage({startTest: 1})
+// }
+
+// Function to set the popup periodically
+function setPopupPeriodically() {
+  // Replace 'popup.html' with your popup HTML file
+  // chrome.browserAction.setPopup({ popup: 'popup.html' });
+  chrome.windows.create({
+    type: 'popup',
+    url: 'popup.html',
+    width: 400,
+    height: 300,
+    top: 100,
+    left: 100
+  });
+  console.log("setPopupPeriodically function")
+}
+
+// Set an initial alarm when the extension is installed or updated
+chrome.runtime.onInstalled.addListener(function() {
+  setPopupPeriodically();
+  // Create an alarm to set the popup periodically
+  chrome.alarms.create('setPopupAlarm', {
+    periodInMinutes: 180 // Adjust the period as needed (in minutes)
+  });
+  console.log("Periodic Alarm Set")
+});
+
+// Handle the alarm event
+chrome.alarms.onAlarm.addListener(function(alarm) {
+  if (alarm.name === 'setPopupAlarm') {
+    setPopupPeriodically();
+    console.log("Periodic onAlarm listener")
+  }
+});
+
+
+console.log("background.js loaded")
