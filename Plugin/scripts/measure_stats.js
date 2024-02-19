@@ -18,17 +18,26 @@ const urlList = [
 
 var urlsOpened = []
 
-var testId = generateUUID();
+// var testId = generateUUID();
+var testId = null;
 
 
 // const script = document.createElement('script');
 // script.src = "aws-sdk-2.1529.0.min.js"
 // document.body.appendChild(script);
 
+// var s3_options = {
+//   endpoint: "http://localhost:9000",
+//   accessKeyId: "DLhmhybad207JQADbafj",
+//   secretAccessKey: "P5qZI72V2Cmj2vkWCbp8iwsD1x4HsuI9bTBz1y5o",
+//   s3ForcePathStyle: 'true',
+//   signatureVersion: 'v4'
+// }
+
 var s3_options = {
-  endpoint: "http://localhost:9000",
-  accessKeyId: "KxxAZdvGZWZFY5wLWldz",
-  secretAccessKey: "SKVVsgEWC7R0dxXx85s62fPqusAlXZ4NbmXSmCdy",
+  endpoint: "http://131.159.25.97:9000",
+  accessKeyId: "jOfZnouPDSkAPNFhIUbQ",
+  secretAccessKey: "WDgKvikfddTvrFXuC9YvRB6RzOn2w8vmDyTtNVdS",
   s3ForcePathStyle: 'true',
   signatureVersion: 'v4'
 }
@@ -42,8 +51,9 @@ var s3 = new AWS.S3(s3_options)
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(`request: ${JSON.stringify(request)}`)
-    
-    // Log or use the received value
+    if (request.measurementVal) {
+      testId = request.measurementVal.measurementID
+    }
     if (request.status) {
       urlsOpened.push(request.requestUrl)
       console.log(urlsOpened)
@@ -83,9 +93,18 @@ chrome.runtime.onMessage.addListener(
       performanceDict[currentUrl]['transferSize'] = request.transferSize
     } 
     if (request.speedTest) {
-      speedTestDict = request.speedTest
+      var speedTestDict = request.speedTest
       if (speedTestDict.serverIP) {
         speedTestResult['serverIP'] = speedTestDict.serverIP
+      }
+      else if (speedTestDict.serverLocation) {
+        speedTestResult['serverLocation'] = speedTestDict.serverLocation
+      }
+      else if (speedTestDict.clientIP) {
+        speedTestResult['clientIP'] = speedTestDict.clientIP
+      }
+      else if (speedTestDict.clientASN) {
+        speedTestResult['clientASN'] = speedTestDict.clientASN
       }
     }
     if (request.startTest) {
@@ -149,11 +168,16 @@ chrome.runtime.onMessage.addListener(
 );
 
 function savePerformanceStats() {
-    
+    var timestampInMilliseconds = new Date().getTime();
+    var timestampString = timestampInMilliseconds.toString();
     var completeTestObj = new Object()
+    completeTestObj['client_details'] = ipDetails
+    completeTestObj['client_details']['measurementID'] = testId
+    completeTestObj['client_details']['timestamp'] = timestampInMilliseconds
     completeTestObj['web_browsing'] = performanceDict
     completeTestObj['speed_test'] = speedTestResult
-    filename = testId + ".json"
+    
+    filename = testId + "_" + timestampString + ".json"
     var params = {
         Body: JSON.stringify(completeTestObj), 
         Bucket: "measurements", 
@@ -237,6 +261,10 @@ async function getIPGeolocationData() {
     // ipDivHeader.appendChild(myIPDetails);
     // section.appendChild(ipDivHeader)
     // chrome.tabs.sendMessage(progressTabId,{update: "Retrieving IP and geolocation...Done", step: "Same"})
+
+    ipDetails['IP']=ipJsonDetails.query
+    ipDetails['City']=ipJsonDetails.city
+    ipDetails['ISP_AS']=ipJsonDetails.as
     
     ol_element.children[ol_element.childElementCount - 1].textContent = "Retrieving IP and geolocation...Done";
 
@@ -270,6 +298,7 @@ function runSpeedTest(bwStep) {
   speedTestResult['downloadedBandwidth'] = speedTestRawResult.getDownloadBandwidth()
   speedTestResult['uploadBandwidth'] = speedTestRawResult.getUploadBandwidth()
   speedTestResult['packetLoss'] = speedTestRawResult.getPacketLoss()
+  speedTestResult['scores'] = speedTestRawResult.getScores()
 
   savePerformanceStats()
   bwStep.textContent = "Running Speed Test......Done"
@@ -280,6 +309,7 @@ function runSpeedTest(bwStep) {
   completed_element.textContent = "Test Completed"
   completed_element.id = "test-completed"
   steps_element.appendChild(completed_element)
+  chrome.runtime.sendMessage({speedTestCompleted: 1})
   };
 
   window.speedTestEngine.onError = (e) => {
@@ -293,6 +323,7 @@ function runSpeedTest(bwStep) {
     completed_element.textContent = "Test Completed"
     completed_element.id = "test-completed"
     steps_element.appendChild(completed_element)
+    chrome.runtime.sendMessage({speedTestCompleted: 1})
   }
   
 }
@@ -404,15 +435,15 @@ async function testSteps(){
 //   clearInterval(intervalId);
 // });
 
-var exBtn = document.getElementById('executeTestBtn');
+// var exBtn = document.getElementById('executeTestBtn');
 
-exBtn.addEventListener('click', function() {
-  // Code to be executed when the button is clicked
-  exBtn.disabled = true
-  testSteps()
-  // You can add more code here based on your requirements
-});
-
+// exBtn.addEventListener('click', function() {
+//   // Code to be executed when the button is clicked
+//   exBtn.disabled = true
+//   testSteps()
+//   // You can add more code here based on your requirements
+// });
+testSteps()
 console.log("measure_stats.js loaded")
 
 

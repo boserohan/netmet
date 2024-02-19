@@ -1,5 +1,7 @@
 let startTimeMap = {};
-var capturedSpeedTestId = false
+var capturedSpeedTestClientIP = false
+var capturedSpeedTestClientASN = false
+var capturedSpeedTestServerLoc = false
 var capturedSpeedTestServerIP = false
 // url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
 url_list = [
@@ -13,7 +15,7 @@ url_list = [
   '*://www.patreon.com/',
   '*://www.zoom.us/',
   '*://tubidy.cool/',
-  '*://speed.cloudflare.com/*'
+  '*://*.cloudflare.com/*'
 ];
 // https://speed.cloudflare.com/__down*
 urls_completed = []
@@ -21,6 +23,27 @@ urls_completed = []
 let navigationStart;
 let domContentLoadedTime;
 let pageLoadTime;
+
+let testId;
+
+function generateUUID() {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
+chrome.runtime.onInstalled.addListener(function(details) {
+  // Check if the reason is 'install' (extension is newly installed)
+  if (details.reason === 'install') {
+    // Code to run only once after the extension is installed
+    console.log('Extension installed. Generating unique UUID');
+    
+    testId=generateUUID()
+
+  }
+});
 
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
   // Capture the navigation start time
@@ -53,6 +76,13 @@ chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
     url = details.url
     console.log(`onBeforeRequest URL: ${details.url}`);
+    chrome.runtime.sendMessage({measurementVal: { measurementID: testId}});
+    // if (url.includes('https://aim.cloudflare.com/__log')) {
+    //   capturedSpeedTestClientASN = false
+    //   capturedSpeedTestClientIP = false
+    //   capturedSpeedTestServerIP = false
+    //   capturedSpeedTestServerLoc = false
+    // }
     // if (!capturedSpeedTestId) {
     //   if (details.url.includes('https://speed.cloudflare.com/__down?')) {
     //     const url = new URL(details.url);
@@ -176,8 +206,44 @@ chrome.webRequest.onCompleted.addListener(
 chrome.webRequest.onHeadersReceived.addListener(
     function(details) {
       if (details.url.includes('speed.cloudflare.com')) {
+        if (details.url.includes('https://speed.cloudflare.com/__down?')) {
+        for (const header of details.responseHeaders) {
+          if (header.name.toLowerCase() === 'cf-meta-colo' && !capturedSpeedTestServerLoc) {
+            // Capture the value of the cdn header
+            const serverLoc = header.value;
+            // Log or process the captured value as needed
+            console.log(`${header.name.toLowerCase()}: ${serverLoc}`)
+            // startTimeMap[details.requestId].server_loc = customHeaderValue
+            chrome.runtime.sendMessage({speedTest: { serverLocation: serverLoc}})
+            capturedSpeedTestServerLoc = true
+          }
+          else if (header.name.toLowerCase() === 'cf-meta-asn' && !capturedSpeedTestClientASN) {
+            // Capture the value of the cdn header
+            const clientASN = header.value;
+            // Log or process the captured value as needed
+            console.log(`${header.name.toLowerCase()}: ${clientASN}`)
+            // startTimeMap[details.requestId].client_asn = customHeaderValue
+            chrome.runtime.sendMessage({speedTest: { clientASN: clientASN}})
+            capturedSpeedTestClientASN = true
+          }
+          else if (header.name.toLowerCase() === 'cf-meta-ip' && !capturedSpeedTestClientIP) {
+            // Capture the value of the cdn header
+            const clientIP = header.value;
+            // Log or process the captured value as needed
+            console.log(`${header.name.toLowerCase()}: ${clientIP}`)
+            // startTimeMap[details.requestId].client_ip = customHeaderValue
+            chrome.runtime.sendMessage({speedTest: { clientIP: clientIP}})
+            capturedSpeedTestClientIP = true
+          }
+
+          if (capturedSpeedTestServerLoc && capturedSpeedTestClientIP && capturedSpeedTestClientASN) {
+            break;
+          }
+        }
+        }
         return;
       }
+      
       // Iterate through response headers
       for (const header of details.responseHeaders) {
         if (header.name.toLowerCase() === 'x-amz-cf-pop') {
@@ -227,13 +293,18 @@ chrome.webRequest.onErrorOccurred.addListener(
 );
 
 
-// chrome.runtime.onMessage.addListener(
-//     function(request, sender, sendResponse) {
-//       // Log or use the received value
-//       console.log(`Message from measure_stats.js about ${JSON.stringify(request)}`);
-//       chrome.runtime.sendMessage(request);
-//     }
-// );
+chrome.runtime.onMessage.addListener(
+    function(request, sender, sendResponse) {
+      // Log or use the received value
+      console.log(`Message from measure_stats.js about ${JSON.stringify(request)}`);
+      if (request.speedTestCompleted) {
+        capturedSpeedTestClientASN = false
+        capturedSpeedTestClientIP = false
+        capturedSpeedTestServerIP = false
+        capturedSpeedTestServerLoc = false
+      }
+    }
+);
 
 // function startTest() {
 //   console.log("Starting Test...")
@@ -260,7 +331,7 @@ chrome.runtime.onInstalled.addListener(function() {
   setPopupPeriodically();
   // Create an alarm to set the popup periodically
   chrome.alarms.create('setPopupAlarm', {
-    periodInMinutes: 180 // Adjust the period as needed (in minutes)
+    periodInMinutes: 15 // Adjust the period as needed (in minutes)
   });
   console.log("Periodic Alarm Set")
 });
