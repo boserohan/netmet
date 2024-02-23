@@ -10,7 +10,7 @@
   },
   "browser_action": {
     "default_icon": "img/extension-icon.png",
-    "default_popup": "index.html"
+    "default_popup": "test_page.html"
   },
   "content_scripts": [
     {

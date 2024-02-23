@@ -10,7 +10,7 @@ function getTimings() {
     if (navigationEntries.length > 0) {
       const navigationTiming = navigationEntries[0];
 
-      // Time To First Byte (TTFB)/ Request Time
+      // Time To First Byte (TTFB)/ Server Response Time
       const ttfb = navigationTiming.responseStart - navigationTiming.requestStart;
       // Latency
       const latency = navigationTiming.responseStart - navigationTiming.fetchStart;
