@@ -20,7 +20,6 @@ function observeButtonElement() {
         }
       });
     });
-
     // Configure and start the MutationObserver
     buttonObserver.observe(btnElement, { attributes: true, attributeFilter: ["style"] });
   }

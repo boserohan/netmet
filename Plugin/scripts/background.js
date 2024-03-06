@@ -328,10 +328,13 @@ function setPopupPeriodically() {
   chrome.windows.create({
     type: 'popup',
     url: 'test_page.html',
-    width: 400,
-    height: 300,
+    width: 700,
+    height: 700,
+    // top: 100,
+    // left: 100,
     top: 100,
     left: 100
+    // state: 'maximized'
   });
   console.log("setPopupPeriodically function")
 }
@@ -341,7 +344,7 @@ chrome.runtime.onInstalled.addListener(function() {
   setPopupPeriodically();
   // Create an alarm to set the popup periodically
   chrome.alarms.create('setPopupAlarm', {
-    periodInMinutes: 15 // Adjust the period as needed (in minutes)
+    periodInMinutes: 120 // Adjust the period as needed (in minutes)
   });
   console.log("Periodic Alarm Set")
 });

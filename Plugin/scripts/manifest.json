@@ -3,14 +3,14 @@
   "name": "Network Performance Logger",
   "version": "1.0",
   "permissions": ["webRequest", "webRequestBlocking", "webNavigation","storage", "alarms", "tabs", "activeTab", "browsingData","*://www.google.com/*", "*://evernote.com/*", "*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/*", "*://fast.com/#", "https://cdn.skypack.dev/", "<all_urls>"],
-  "content_security_policy": "script-src 'self' https://cdn.skypack.dev/; object-src 'self'",
+  "content_security_policy": "script-src 'self' https://cdn.skypack.dev/ https://code.highcharts.com;  object-src 'self' https://code.highcharts.com;",
   "background": {
     "scripts": ["background.js"],
     "persistent": true
   },
   "browser_action": {
     "default_icon": "img/extension-icon.png",
-    "default_popup": "test_page.html"
+    "default_popup": "popup.html"
   },
   "content_scripts": [
     {

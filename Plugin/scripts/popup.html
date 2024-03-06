@@ -3,20 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Web Measurement</title>
+    <title>NetMet</title>
 </head>
 <body>
-    <script src="aws-sdk-2.1529.0.min.js"></script>
-    <h1>Test Progress</h1>
-    <!-- <button id="executeTestBtn">Start Measurement</button> -->
-    <ul id="progress-steps">
-        <li>
-            <p>Starting Test</p>
-            <ol id="test-progress-list">
-            </ol>
-        </li> 
-    </ul>
-    <script src="measure_stats.js"></script>
-    <script type="module" src="run_speedtest.js"></script>
+    
+    <button id="startAdhocTest">Start an Adhoc Measurement</button>
+    <button id="showNetHist">See your network performance history</button>
+    <script src="popup.js"></script>
 </body>
 </html>
