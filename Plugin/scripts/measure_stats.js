@@ -8,6 +8,7 @@ let chartDownload = null
 let chartCurrentWebVal = null
 
 var webBrowsingValues = new Object()
+var webBrowsingHistValues = new Object()
 
 var uploadBWList = []
 var downloadBWList = []
@@ -641,9 +642,9 @@ function setIcons(values) {
   // setIcon('packetLoss', values.packetLoss);
 }
 
-function saveMeasurementValues(values) {
-  chrome.storage.local.set({ measurementValues: values });
-}
+// function saveMeasurementValues(values) {
+//   chrome.storage.local.set({ measurementValues: values });
+// }
 
 function saveMeasurementHist(asn,values) {
   chrome.storage.local.get(['measurementValues'], function(result) {
@@ -659,9 +660,29 @@ function saveMeasurementHist(asn,values) {
     for (const [key, value] of Object.entries(values)) {
       var msm = key
       if (!asn_values.hasOwnProperty(msm)) {
-        asn_values[msm] = [];
+        if (msm.includes('webBrowsingValues')) {
+          asn_values[msm] = {};
+        } else {
+          asn_values[msm] = [];
+        }
+        
       }
-      asn_values[msm].push([ipDetails['timestamp'],value])
+      if (msm.includes('webBrowsingValues')) {
+        for (const [serverLoc, allWebMsms] of Object.entries(value)) {
+          allWebMsms['timestamp'] = [ipDetails['timestamp']]
+          if (!asn_values[msm].hasOwnProperty(serverLoc)) {
+            asn_values[msm][serverLoc] = allWebMsms
+          } else {
+            for (const [metric, valueArr] of Object.entries(allWebMsms)) {
+              asn_values[msm][serverLoc][metric].push(valueArr[0])
+            }
+
+          }
+        }
+      } else {
+        asn_values[msm].push([ipDetails['timestamp'],value])
+      }
+      
     }
     all_values[asn] = asn_values
     chrome.storage.local.set({ measurementValues: all_values });
@@ -710,14 +731,14 @@ function showResults() {
   // chartCurrentASNWebValues()
 
   const valuesToStore = {
-    webBrowsingValues: webBrowsingValues,  
+    webBrowsingValues: webBrowsingHistValues,  
     downloadSpeed: parseFloat(meanClientDownBW),
     uploadSpeed: parseFloat(meanClientUpBW),
     // packetLoss: avgPacketLoss,
-    lastTestDate: lastTestDate,
+    // lastTestDate: lastTestDate,
   };
   // setIcons(valuesToStore);
-  saveMeasurementValues(valuesToStore);
+  // saveMeasurementValues(valuesToStore);
   saveMeasurementHist(ipDetails['ISP_AS'], valuesToStore)
   exBtn.disabled = false;
 }
@@ -788,7 +809,7 @@ function chartASNHistValues(asn) {
     var uploadBWData = all_values[asn]['uploadSpeed']
     console.log(downloadBWList)
     console.log(uploadBWList)
-    Highcharts.chart('container', {
+    Highcharts.chart('containerBWHist', {
       chart: {
           type: 'spline'
       },
@@ -850,6 +871,142 @@ function chartASNHistValues(asn) {
               data: uploadBWData
           },
       ]
+    });
+
+    var webValuesHist = all_values[asn]['webBrowsingValues']
+
+    const avgTtfbHistArr = []
+    const avgConnectTimeHistArr = []
+    const avgDnsLookupTimeHistArr = []
+    const avgTlsNegotiationTimeHistArr = []
+    const serverLocationsHistArr = []
+    
+    for (const [key, value] of Object.entries(webValuesHist)) {
+      serverLocationsHistArr.push(key)
+      avgTtfbHistArr.push(parseFloat((value.avgTtfb.reduce((acc, num) => acc + num, 0)/ value.avgTtfb.length).toFixed(2)))
+      avgConnectTimeHistArr.push(parseFloat((value.avgConnectTime.reduce((acc, num) => acc + num, 0)/ value.avgConnectTime.length).toFixed(2)))
+      avgDnsLookupTimeHistArr.push(parseFloat((value.avgDnsLookupTime.reduce((acc, num) => acc + num, 0)/ value.avgDnsLookupTime.length).toFixed(2)))
+      avgTlsNegotiationTimeHistArr.push(parseFloat((value.avgTlsNegotiationTime.reduce((acc, num) => acc + num, 0)/ value.avgTlsNegotiationTime.length).toFixed(2)))
+
+      // if (!webBrowsingHistValues.hasOwnProperty(key)) {
+      //   webBrowsingHistValues[key] = {
+      //     avgTtfb: 0,
+      //     avgConnectTime: 0,
+      //     avgDnsLookupTime: 0,
+      //     avgTlsNegotiationTime: 0,
+      //   }
+      // }
+
+      // webBrowsingHistValues[key]['avgTtfb'] = avgTtfbArr.slice(-1)
+      // webBrowsingHistValues[key]['avgConnectTime'] = avgConnectTimeArr.slice(-1)
+      // webBrowsingHistValues[key]['avgDnsLookupTime'] = avgDnsLookupTimeArr.slice(-1)
+      // webBrowsingHistValues[key]['avgTlsNegotiationTime'] = avgtlsNegotiationTimeArr.slice(-1)
+
+    }
+
+
+    Highcharts.chart('containerWebHist', {
+      chart: {
+          type: 'bar',
+          responsive: {
+            rules: [{
+                condition: {
+                    maxWidth: 500
+                },
+                chartOptions: {
+                    legend: {
+                        align: 'center',
+                        verticalAlign: 'bottom',
+                        layout: 'horizontal'
+                    },
+                    yAxis: {
+                        labels: {
+                            align: 'left',
+                            x: 0,
+                            y: -5
+                        },
+                        title: {
+                            text: null
+                        }
+                    },
+                    subtitle: {
+                        text: null
+                    },
+                    credits: {
+                        enabled: false
+                    }
+                }
+            }]
+        }
+      },
+      title: {
+          text: 'Web Browsing Experience',
+          align: 'left'
+      },
+      subtitle: {
+          text: ipDetails['ISP_AS'],
+          align: 'left'
+      },
+      xAxis: {
+          categories: serverLocationsHistArr,
+          title: {
+              text: 'CDN Server Locations'
+          },
+          gridLineWidth: 1,
+          lineWidth: 0
+      },
+      yAxis: {
+          min: 0,
+          title: {
+              text: 'Latency (ms)',
+              align: 'high'
+          },
+          labels: {
+              overflow: 'justify'
+          },
+          gridLineWidth: 0
+      },
+      // tooltip: {
+      //     valueSuffix: ' millions'
+      // },
+      plotOptions: {
+          bar: {
+              borderRadius: '50%',
+              dataLabels: {
+                  enabled: true
+              },
+              groupPadding: 0.1,
+              pointWidth: 10
+          }
+      },
+      legend: {
+          layout: 'horizontal',
+          align: 'center',
+          verticalAlign: 'bottom',
+          floating: true,
+          backgroundColor:
+              Highcharts.defaultOptions.legend.backgroundColor || '#FFFFFF',
+          itemStyle: {
+            fontSize: '8px'
+          }
+          
+      },
+      credits: {
+          enabled: false
+      },
+      series: [{
+          name: 'DNS Lookup',
+          data: avgDnsLookupTimeHistArr
+      }, {
+          name: 'Server Connection',
+          data: avgConnectTimeHistArr
+      }, {
+          name: 'TLS Negotiation',
+          data: avgTlsNegotiationTimeHistArr
+      }, {
+          name: 'Time to First Byte',
+          data: avgTtfbHistArr
+      }]
     });
 
   });
@@ -994,6 +1151,21 @@ function chartCurrentASNWebValues() {
     avgConnectTimeArr.push(parseFloat((value.connectTimeArr.reduce((acc, num) => acc + num, 0)/ value.connectTimeArr.length).toFixed(2)))
     avgDnsLookupTimeArr.push(parseFloat((value.dnsLookupTimeArr.reduce((acc, num) => acc + num, 0)/ value.dnsLookupTimeArr.length).toFixed(2)))
     avgtlsNegotiationTimeArr.push(parseFloat((value.tlsNegotiationTimeArr.reduce((acc, num) => acc + num, 0)/ value.tlsNegotiationTimeArr.length).toFixed(2)))
+
+    if (!webBrowsingHistValues.hasOwnProperty(key)) {
+      webBrowsingHistValues[key] = {
+        avgTtfb: 0,
+        avgConnectTime: 0,
+        avgDnsLookupTime: 0,
+        avgTlsNegotiationTime: 0,
+      }
+    }
+
+    webBrowsingHistValues[key]['avgTtfb'] = avgTtfbArr.slice(-1)
+    webBrowsingHistValues[key]['avgConnectTime'] = avgConnectTimeArr.slice(-1)
+    webBrowsingHistValues[key]['avgDnsLookupTime'] = avgDnsLookupTimeArr.slice(-1)
+    webBrowsingHistValues[key]['avgTlsNegotiationTime'] = avgtlsNegotiationTimeArr.slice(-1)
+
   }
 
 
@@ -1119,7 +1291,7 @@ window.addEventListener('resize', function () {
 
 
 function onPageLoad() {
-  updateMeasurementValues();
+  // updateMeasurementValues();
 }
 
 chrome.runtime.sendMessage({retrieveUUID: 1})
