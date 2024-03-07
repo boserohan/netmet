@@ -327,7 +327,7 @@ function setPopupPeriodically() {
 
   chrome.windows.create({
     type: 'popup',
-    url: 'test_page.html',
+    url: 'index.html',
     width: 700,
     height: 700,
     // top: 100,

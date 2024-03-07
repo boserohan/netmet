@@ -337,7 +337,7 @@ async function getIPGeolocationData() {
     ipDetails['IP']=ipJsonDetails.query
     ipDetails['City']=ipJsonDetails.city
     ipDetails['ISP_AS']=ipJsonDetails.as
-    
+    document.getElementById("ispText").textContent = ipJsonDetails.as
     // ol_element.children[ol_element.childElementCount - 1].textContent = "Retrieving IP and geolocation...Done";
 
 }
@@ -489,9 +489,10 @@ Mean server throughput: ${throughput} Mbps`);
     },
   ).then((exitcode) => {
     console.log("ndt7 test completed with exit code:", exitcode)
-    document.getElementById('testInProgressSpinner').style.display = 'none';
-    document.getElementById('lastTestDate').textContent = 'Last test run: ' + new Date().toLocaleString();
-    document.getElementById('lastTestDate').style.display = 'block';
+    document.getElementById('testInProgressText').style.display = 'none';
+    // document.getElementById('testInProgressSpinner').style.display = 'none';
+    // document.getElementById('lastTestDate').textContent = 'Last test run: ' + new Date().toLocaleString();
+    // document.getElementById('lastTestDate').style.display = 'block';
     showResults()
     saveBandwidthStats()
     chrome.runtime.sendMessage({speedTestCompleted: 1})
@@ -576,8 +577,9 @@ async function testSteps(){
   // xhr.open('GET', chrome.extension.getURL('show_progress.html'), true);
   // xhr.send()
 
-  document.getElementById('testInProgressSpinner').style.display = 'block';
-  document.getElementById('lastTestDate').style.display = 'none';
+  // document.getElementById('testInProgressSpinner').style.display = 'block';
+  
+  // document.getElementById('lastTestDate').style.display = 'none';
   
   chrome.browsingData.remove({
     "origins": urlList
@@ -653,7 +655,8 @@ function saveMeasurementHist(asn,values) {
     
     if (!all_values.hasOwnProperty(asn)) {
       all_values[asn] = new Object();
-      addToASNDropdown(asn)
+      // addToASNDropdown(asn)
+      addItemToDropdown("dropdownASNList",asn)
     }
     asn_values = all_values[asn]
     // run a for loop over values to get msm as key
@@ -725,9 +728,9 @@ function updateMeasurementValues() {
 function showResults() {
 
   const lastTestDate = new Date().toLocaleString();
-  document.getElementById('testInProgressSpinner').style.display = 'none';
-  document.getElementById('lastTestDate').textContent = 'Last test run: ' + lastTestDate;
-  document.getElementById('lastTestDate').style.display = 'block';
+  document.getElementById('testInProgressText').style.display = 'none';
+  // document.getElementById('lastTestDate').textContent = 'Last test run: ' + lastTestDate;
+  // document.getElementById('lastTestDate').style.display = 'block';
   // chartCurrentASNWebValues()
 
   const valuesToStore = {
@@ -755,6 +758,10 @@ var exBtn = document.getElementById('startMeasurementBtn');
 
 exBtn.addEventListener('click', function() {
   exBtn.disabled = true
+  document.getElementById('testInProgressText').style.display = 'block';
+  document.getElementById("displayHeader").textContent = "Current Overview"
+  document.getElementById('currentMeasurementContainer').style.display = 'block'
+  document.getElementById('histMeasurementContainer').style.display = 'none'
   testSteps()
   // var filename = "demo" + "_" + Date.now() + ".json"
   //   var params = {
@@ -771,34 +778,76 @@ exBtn.addEventListener('click', function() {
 // testSteps()
 
 
-var dropdown = document.getElementById('dropdownASN');
-dropdown.addEventListener('change', function() {
-  // This function will be called when the selected ASN changes
-  const selectedOption = dropdown.value;
-  console.log('Selected option:', selectedOption);
-  chartASNHistValues(selectedOption);
-});
+// var dropdown = document.getElementById('dropdownASN');
+// dropdown.addEventListener('change', function() {
+//   // This function will be called when the selected ASN changes
+//   const selectedOption = dropdown.value;
+//   console.log('Selected option:', selectedOption);
+//   chartASNHistValues(selectedOption);
+// });
 
+
+// function populateASNDropdown() {
+//   chrome.storage.local.get(['measurementValues'], function(result) {
+//     var all_values = result.measurementValues || {};
+//     var asnOptions = Object.keys(all_values)
+//     asnOptions.forEach((option) => {
+//       const optionElement = document.createElement('option');
+//       optionElement.text = option;
+//       dropdown.appendChild(optionElement);
+//     });
+//   });
+// }
 
 function populateASNDropdown() {
   chrome.storage.local.get(['measurementValues'], function(result) {
     var all_values = result.measurementValues || {};
     var asnOptions = Object.keys(all_values)
     asnOptions.forEach((option) => {
-      const optionElement = document.createElement('option');
-      optionElement.text = option;
-      dropdown.appendChild(optionElement);
+      addItemToDropdown("dropdownASNList", option)
     });
   });
 }
 
+function addItemToDropdown(listId, itemName) {
+  var newItem = document.createElement("li");
+  newItem.setAttribute("data-thq", "thq-dropdown");
+  newItem.setAttribute("class", "home-dropdown list-item");
+  // Create a div element within the li
+  var divElement = document.createElement("div");
+  divElement.setAttribute("data-thq", "thq-dropdown-toggle");
+  divElement.setAttribute("class", "home-dropdown-toggle1");
+
+  // Create a span element within the div
+  var spanElement = document.createElement("span");
+  spanElement.setAttribute("class", "home-text02");
+  spanElement.textContent = itemName;
+  spanElement.addEventListener("click", clickASNItemHandler)
+  // Append the span element to the div
+  divElement.appendChild(spanElement);
+
+  // Append the div element to the li
+  newItem.appendChild(divElement);
+
+  // Append the new li element to the existing UL
+  document.getElementById(listId).appendChild(newItem);
+}
+
+function clickASNItemHandler() {
+  document.getElementById("displayHeader").textContent = "Historical Overview"
+  document.getElementById('currentMeasurementContainer').style.display = 'none'
+  document.getElementById('histMeasurementContainer').style.display = 'block'
+  document.getElementById("ispText").textContent = this.textContent
+  chartASNHistValues(this.textContent)
+}
+
 populateASNDropdown()
 
-function addToASNDropdown(option) {
-  const optionElement = document.createElement('option');
-  optionElement.text = option;
-  dropdown.appendChild(optionElement);
-}
+// function addToASNDropdown(option) {
+//   const optionElement = document.createElement('option');
+//   optionElement.text = option;
+//   dropdown.appendChild(optionElement);
+// }
 
 
 function chartASNHistValues(asn) {
@@ -1023,7 +1072,7 @@ function chartCurrentASNBWValues() {
 
     pane: {
         center: ['50%', '85%'],
-        size: '60%',
+        size: '100%',
         startAngle: -90,
         endAngle: 90,
         background: {
@@ -1275,7 +1324,7 @@ function chartCurrentASNWebValues() {
 }
 
 
-var showHistBWBtn = document.getElementById('showHistBWBtn');
+var showHistBWBtn = document.getElementById('dropdownASNDiv');
 showHistBWBtn.addEventListener('click', function() {
   chrome.storage.local.get(['measurementValues'], function(result) {
     var all_values = result.measurementValues || {};
@@ -1284,9 +1333,9 @@ showHistBWBtn.addEventListener('click', function() {
   
 });
 
-window.addEventListener('resize', function () {
-  chartCurrentWebVal.setSize(window.innerWidth, window.innerHeight);
-});
+// window.addEventListener('resize', function () {
+//   chartCurrentWebVal.setSize(window.innerWidth, window.innerHeight);
+// });
 
 
 
