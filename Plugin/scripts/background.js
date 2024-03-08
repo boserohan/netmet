@@ -23,6 +23,7 @@ urls_completed = []
 let navigationStart;
 let domContentLoadedTime;
 let pageLoadTime;
+var testStatus;
 
 
 
@@ -317,6 +318,58 @@ chrome.runtime.onMessage.addListener(
           console.log(`Retrieved UUID from storage: ${result.measurementId}`)
           chrome.runtime.sendMessage({measurementId: testId })
           });
+      }
+      // chrome.runtime.sendMessage({lastASN: {
+      //   ASN: asn,
+      //   lastResults : {timestamp: lastTestDate},
+      // }})
+      if (request.lastASN) {
+
+        chrome.storage.local.set({ lastASN: request.lastASN.ASN });
+        console.log(`asnLast: ${JSON.stringify(request.lastASN.ASN)}`)
+
+        chrome.storage.local.get(['asnLastResults'], function(result) {
+          var asnLastResultsUpdated = result.asnLastResults || {};
+          asnLastResultsUpdated[request.lastASN.ASN] = request.lastASN.lastResults
+          chrome.storage.local.set({ asnLastResults: asnLastResultsUpdated });
+          console.log(`asnLastResults: ${JSON.stringify(asnLastResultsUpdated)}`)
+        })
+
+        // chrome.storage.local.get(['asnSet'], function(result) {
+        //   var asnSetUpdated = null;
+        //   if (!result.asnSet) {
+        //     asnSetUpdated = new Set()
+        //     console.log("New ASN set created")
+        //   } else {
+        //     asnSetUpdated = result.asnSet
+        //     console.log(`Existing ASN set: ${asnSetUpdated}`)
+        //   }
+        //   asnSetUpdated.add(request.lastASN.ASN)
+        //   chrome.storage.local.set({ asnSet: asnSetUpdated });
+        //   console.log(`asnSet: ${asnSetUpdated}`)
+        // })
+      }
+
+      if (request.getASNDetails) {
+        var allASNDetails = new Object()
+        chrome.storage.local.get(['lastASN'], function(result) {
+          var lastASN = result.lastASN || null;
+          if (lastASN) {
+            allASNDetails['lastASN'] = lastASN
+            chrome.storage.local.get(['asnLastResults'], function(result) {
+              var lastASNResults = result.asnLastResults || null;
+              if (lastASNResults.hasOwnProperty(lastASN)) {
+                allASNDetails['lastResults'] = lastASNResults[lastASN]
+              }
+              allASNDetails['asnSet'] = Object.keys(lastASNResults)
+              chrome.runtime.sendMessage({asnDetails: allASNDetails})
+              console.log(`sending details to popup.js: ${JSON.stringify(allASNDetails)}`)
+            })
+          }
+        })
+
+
+        
       }
     }
 );

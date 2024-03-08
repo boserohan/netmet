@@ -19,6 +19,8 @@ var connectTimeArr = [];
 var dnsLookupTimeArr = [];
 var tlsNegotiationTimeArr = [];
 
+var lastTestDate;
+
 const urlList = [
   'https://www.datadoghq.com/',
   'https://www.connatix.com/',
@@ -148,9 +150,11 @@ chrome.runtime.onMessage.addListener(
         speedTestResult['clientASN'] = speedTestDict.clientASN
       }
     }
-    if (request.startTest) {
-      testSteps()
-    }
+    // if (request.action) {
+    //   if (request.action == 'startNewTest') {
+    //     testSteps()
+    //   }
+    // }
     // if (request.action) {
     //   console.log(`Action: ${request.action}`)
     //   chrome.tabs.captureVisibleTab(null, { format: 'png' }, function(dataUrl) {
@@ -580,6 +584,11 @@ async function testSteps(){
   // document.getElementById('testInProgressSpinner').style.display = 'block';
   
   // document.getElementById('lastTestDate').style.display = 'none';
+  exBtn.disabled = true
+  document.getElementById('testInProgressText').style.display = 'block';
+  document.getElementById("displayHeader").textContent = "Current Overview"
+  document.getElementById('currentMeasurementContainer').style.display = 'block'
+  document.getElementById('histMeasurementContainer').style.display = 'none'
   
   chrome.browsingData.remove({
     "origins": urlList
@@ -652,7 +661,10 @@ function saveMeasurementHist(asn,values) {
   chrome.storage.local.get(['measurementValues'], function(result) {
     var all_values = result.measurementValues || {};
     var asn_values = null;
-    
+    chrome.runtime.sendMessage({lastASN: {
+                                          ASN: asn,
+                                          lastResults : {timestamp: lastTestDate},
+                              }})
     if (!all_values.hasOwnProperty(asn)) {
       all_values[asn] = new Object();
       // addToASNDropdown(asn)
@@ -727,7 +739,6 @@ function updateMeasurementValues() {
 
 function showResults() {
 
-  const lastTestDate = new Date().toLocaleString();
   document.getElementById('testInProgressText').style.display = 'none';
   // document.getElementById('lastTestDate').textContent = 'Last test run: ' + lastTestDate;
   // document.getElementById('lastTestDate').style.display = 'block';
@@ -743,6 +754,8 @@ function showResults() {
   // setIcons(valuesToStore);
   // saveMeasurementValues(valuesToStore);
   saveMeasurementHist(ipDetails['ISP_AS'], valuesToStore)
+  lastTestDate = new Date().toLocaleString()
+  chrome.runtime.sendMessage({'lastTestDate': lastTestDate})
   exBtn.disabled = false;
 }
 
@@ -757,11 +770,7 @@ function showResults() {
 var exBtn = document.getElementById('startMeasurementBtn');
 
 exBtn.addEventListener('click', function() {
-  exBtn.disabled = true
-  document.getElementById('testInProgressText').style.display = 'block';
-  document.getElementById("displayHeader").textContent = "Current Overview"
-  document.getElementById('currentMeasurementContainer').style.display = 'block'
-  document.getElementById('histMeasurementContainer').style.display = 'none'
+  
   testSteps()
   // var filename = "demo" + "_" + Date.now() + ".json"
   //   var params = {
@@ -1341,6 +1350,29 @@ showHistBWBtn.addEventListener('click', function() {
 
 function onPageLoad() {
   // updateMeasurementValues();
+  const currentUrl = window.location.href;
+
+  // Create a URLSearchParams object with the query parameters
+  const searchParams = new URLSearchParams(currentUrl.split('?')[1]);
+
+  // Access individual parameters
+  const action_type = searchParams.get('action');
+  if (action_type === 'startnewtest') {
+    testSteps()
+    console.log("Start New Test")
+  }
+  if (action_type === 'checkhistory') {
+    const asn_value = searchParams.get('asn');
+    if (asn_value != 'null') {
+      document.getElementById("displayHeader").textContent = "Historical Overview"
+      document.getElementById('currentMeasurementContainer').style.display = 'none'
+      document.getElementById('histMeasurementContainer').style.display = 'block'
+      document.getElementById("ispText").textContent = asn_value
+      chartASNHistValues(asn_value)
+      console.log(`Check history for asn: ${asn_value}`)
+    }
+    
+  }
 }
 
 chrome.runtime.sendMessage({retrieveUUID: 1})

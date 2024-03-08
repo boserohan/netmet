@@ -42,6 +42,7 @@
     border-width: 1px;
     border-radius: 4px;
     background-color: var(--dl-color-gray-white);
+    cursor: pointer;
   }
   .input {
     color: var(--dl-color-gray-black);
@@ -71,6 +72,7 @@
   }
   .list-item {
     display: list-item;
+    cursor: pointer;
   }
   .teleport-show {
     display: flex !important;
@@ -288,6 +290,15 @@
     border-style: ridge;
     border-width: 0px;
     background-color: #ffffff;
+  }
+  
+  .home-measurement:hover {
+    color: #FFFFFF;
+    text-align: right;
+    border-style: ridge;
+    border-width: 0px;
+    background-color: #32A94C;
+    box-shadow: 5px 5px 10px 0px #2f2d2d;
   }
   .home-container1 {
     flex: 0 0 auto;
