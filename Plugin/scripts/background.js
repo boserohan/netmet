@@ -3,6 +3,7 @@ var capturedSpeedTestClientIP = false
 var capturedSpeedTestClientASN = false
 var capturedSpeedTestServerLoc = false
 var capturedSpeedTestServerIP = false
+var popupFrequency = 120
 // url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
 url_list = [
   '*://www.datadoghq.com/',
@@ -366,10 +367,19 @@ chrome.runtime.onMessage.addListener(
               console.log(`sending details to popup.js: ${JSON.stringify(allASNDetails)}`)
             })
           }
+        }) 
+      }
+      if (request.newAlarmFrequency) {
+        var alarmInt = parseInt(request.newAlarmFrequency);
+        if (!isNaN(alarmInt)) {
+          setAlarm(alarmInt)
+          chrome.runtime.sendMessage({ alarmFrequency: alarmInt})
+        }
+      }
+      if (request.getPopupFrequency) {
+        chrome.storage.local.get(['alarmFrequency'], function(result) {
+          chrome.runtime.sendMessage({ alarmFrequency: result.alarmFrequency})
         })
-
-
-        
       }
     }
 );
@@ -396,9 +406,7 @@ function setPopupPeriodically() {
 chrome.runtime.onInstalled.addListener(function() {
   setPopupPeriodically();
   // Create an alarm to set the popup periodically
-  chrome.alarms.create('setPopupAlarm', {
-    periodInMinutes: 120 // Adjust the period as needed (in minutes)
-  });
+  setAlarm(popupFrequency)
   console.log("Periodic Alarm Set")
 });
 
@@ -410,5 +418,11 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
   }
 });
 
+function setAlarm(frequencyInMins) {
+  chrome.storage.local.set({ alarmFrequency: frequencyInMins });
+  chrome.alarms.create('setPopupAlarm', {
+    periodInMinutes: frequencyInMins // Adjust the period as needed (in minutes)
+  });
+}
 
 console.log("background.js loaded")

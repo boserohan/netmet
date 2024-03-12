@@ -28,43 +28,23 @@ const urlList = [
   'https://www.trustpilot.com/',
   'https://www.eenadu.net/',
   'https://dto.to/',
-  'https://www.bmj.com/',
-  'https://www.patreon.com/',
+  'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
+  'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
   'https://www.zoom.us/',
-  'https://tubidy.cool/'
+  'https://tubidy.cool/js/main.js'
 ];
 
 var measUUID;
 var urlsOpened = []
 
-// var testId = generateUUID();
-// var testId = null;
-
-
-// const script = document.createElement('script');
-// script.src = "aws-sdk-2.1529.0.min.js"
-// document.body.appendChild(script);
-
-// var s3_options = {
-//   endpoint: "http://localhost:9000",
-//   accessKeyId: "DLhmhybad207JQADbafj",
-//   secretAccessKey: "P5qZI72V2Cmj2vkWCbp8iwsD1x4HsuI9bTBz1y5o",
-//   s3ForcePathStyle: 'true',
-//   signatureVersion: 'v4'
-// }
-
 var s3_options = {
-  // endpoint: "https://cmvm10.cit.tum.de:9000",
-  endpoint: "https://131.159.25.97:9000",
-  accessKeyId: "jOfZnouPDSkAPNFhIUbQ",
-  secretAccessKey: "WDgKvikfddTvrFXuC9YvRB6RzOn2w8vmDyTtNVdS",
+  endpoint: "https://cmvm10.cit.tum.de:9000",
+  accessKeyId: "measurementUser",
+  secretAccessKey: "nafcoj-jidqek-6ditXu", // WDgKvikfddTvrFXuC9YvRB6RzOn2w8vmDyTtNVdS
   s3ForcePathStyle: 'true',
   signatureVersion: 'v4'
 }
 
-// script.onload = function() {
-  // s3 = new AWS.S3(s3_options)
-// }
 
 var s3 = new AWS.S3(s3_options)
 
@@ -72,7 +52,6 @@ chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(`request: ${JSON.stringify(request)}`)
     if (request.measurementId) {
-      // testId = request.measurementVal.measurementID
       setMeasurementId(request.measurementId)
     }
     if (request.status) {
@@ -84,9 +63,6 @@ chrome.runtime.onMessage.addListener(
           performanceDict[requestUrl] = {}
         }
         performanceDict[requestUrl]['ip'] = request.ip
-        // performanceDict[requestUrl]['ttfb'] = request.ttfb
-        // performanceDict[requestUrl]['dlt'] = request.dlt
-        // performanceDict[requestUrl]['plt'] = request.plt
         performanceDict[requestUrl]['statusCode'] = request.statusCode
         performanceDict[requestUrl]['status'] = request.status
         if (request.x_amz_cf_pop) {
@@ -150,65 +126,10 @@ chrome.runtime.onMessage.addListener(
         speedTestResult['clientASN'] = speedTestDict.clientASN
       }
     }
-    // if (request.action) {
-    //   if (request.action == 'startNewTest') {
-    //     testSteps()
-    //   }
-    // }
-    // if (request.action) {
-    //   console.log(`Action: ${request.action}`)
-    //   chrome.tabs.captureVisibleTab(null, { format: 'png' }, function(dataUrl) {
-    //     if (chrome.runtime.lastError) {
-    //       console.error(chrome.runtime.lastError.message);
-    //     } else {
-    //       fetch(dataUrl).then(response => response.blob()).then(blob => {
-    //         const filename = testId + "_bandwidthtest.png"
-    //         const file = new File([blob], filename, { type: 'image/png' });
-            
-    //         const params = {
-    //           Key: filename,
-    //           ContentType: 'image/png',
-    //           Body: file,
-    //           Bucket: "measurements", 
-    //         };
-    
-    //         // Upload the file to S3
-    //         s3.upload(params, function(err, data) {
-    //           if (err) {
-    //             console.error('S3 Upload Error:', err);
-    //           } else {
-    //             console.log('File uploaded successfully. S3 URL:', data.Location);
-    //           }
-    //         });
-    //         console.log('Screenshot captured');
-    //         var ol_element = document.getElementById("test-progress-list")
-    //         ol_element.children[ol_element.childElementCount - 1].textContent = "Running Speed Test......Done";
-    //         if (!(document.getElementById("test-completed"))) {
-    //           var steps_element = document.getElementById("progress-steps")
-    //           var completed_element = document.createElement('li')
-    //           completed_element.textContent = "Test Completed"
-    //           completed_element.id = "test-completed"
-    //           steps_element.appendChild(completed_element)
-
-    //           // chrome.tabs.update({ url: "show_progress.html" })
-    //         }
-    //       });
-    //     }
-    //   });  
-    // }
-    // if (urlsOpened.length == urlList.length) {
-    //   // console.log("All Urls opened!")
-    //   filename = testId + ".json"
-    //   var params = {
-    //       Body: JSON.stringify(performanceDict), 
-    //       Bucket: "measurements", 
-    //       Key: filename, 
-    //   }
-    //   s3.putObject(params, function(err, data) {
-    //       if (err) console.log(err, err.stack) // an error occurred
-    //       else     console.log(data)           // successful response
-    //   })
-    // }
+    if (request.alarmFrequency) {
+      document.getElementById('popupFrequency').value = request.alarmFrequency
+      chrome.storage.local.set({popupFrequency: request.alarmFrequency})
+    }
   }
 );
 
@@ -219,7 +140,6 @@ function saveBandwidthStats() {
   bwDict['download_msm'] = downloadBWList
   bwDict['upload_msm'] = uploadBWList
   bwDict['timestamp'] = timestampInMilliseconds
-  // completeTestObj['speed_test'] = speedTestResult
   
   var filename = getMeasurementId() + "_speedTest_" + timestampString + "_" + ipDetails['ISP_AS'] + ".json"
   var params = {
@@ -243,7 +163,6 @@ function saveBrowsingStats() {
     completeTestObj['client_details']['timestamp'] = timestampInMilliseconds
     ipDetails['timestamp'] = timestampInMilliseconds
     completeTestObj['web_browsing'] = performanceDict
-    // completeTestObj['speed_test'] = speedTestResult
     
     var filename = getMeasurementId() + "_" + timestampString + "_" + ipDetails['ISP_AS'] + ".json"
     var params = {
@@ -274,143 +193,23 @@ function setMeasurementId(testId) {
   measUUID=testId;
 }
 
-function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-
-// this function converts the generic JS ISO8601 date format to the specific format the AWS API wants
-function getAmzDate(dateStr) {
-  var chars = [":","-"];
-  for (var i=0;i<chars.length;i++) {
-    while (dateStr.indexOf(chars[i]) != -1) {
-      dateStr = dateStr.replace(chars[i],"");
-    }
-  }
-  dateStr = dateStr.split(".")[0] + "Z";
-  return dateStr;
-}
-
 async function getIPGeolocationData() {
-    // console.log(`Sending message to tab: ${progressTab}`)
-    // chrome.tabs.sendMessage(progressTab,{update: "Retrieving IP and geolocation...", step: "New"})
-    
-    // STATUS UPDATES
-    // ol_element = document.getElementById("test-progress-list")
-    // var ipretrievalStep = document.createElement('li')
-    // ipretrievalStep.textContent = "Retrieving IP and geolocation..."
-    // ol_element.appendChild(ipretrievalStep)
+
 
     var url = 'http://ip-api.com/json/'
     const ipRequest = new Request(url)
     const response = await fetch(ipRequest, {cache: "no-store"})
     const ipJsonDetails = await response.json()
-    // const observer = new PerformanceObserver((list) => {
-    //     console.log('Performance Entries upcoming')
-    //     // performanceDict[url] = {}
-        
-    //     list.getEntries().forEach((entry) => {
-    //       console.log('Entry Timings:')
-    //       console.log(`Entry: ${entry.name}, Duration: ${entry.duration}`)
-    //       // performanceDict[url][entry.name] = entry.duration
-    //       const requestTime = entry.responseStart - entry.requestStart
-          
-    //       if (requestTime > 0) {
-    //         console.log(`${entry.name}: Request time: ${requestTime}ms`)
-    //         // performanceDict[url][entry.name] = requestTime
-            
-    //       }
-    //     })
-    // })
-      
-    // observer.observe({ type: "resource", buffered: true })
+
     console.log(ipJsonDetails)
 
-    // const section = document.querySelector("section")
-    // const ipDivHeader = document.createElement("h1")
-    // ipDivHeader.textContent = "Your IP Details"
-
-    // const myIPDetails = document.createElement("p")
-    // myIPDetails.textContent = `IP Address: ${ipJsonDetails.query} // City: ${ipJsonDetails.city} // ISP: ${ipJsonDetails.as}`
-    
-
-    // ipDivHeader.appendChild(myIPDetails);
-    // section.appendChild(ipDivHeader)
-    // chrome.tabs.sendMessage(progressTabId,{update: "Retrieving IP and geolocation...Done", step: "Same"})
 
     ipDetails['IP']=ipJsonDetails.query
     ipDetails['City']=ipJsonDetails.city
     ipDetails['ISP_AS']=ipJsonDetails.as
     document.getElementById("ispText").textContent = ipJsonDetails.as
-    // ol_element.children[ol_element.childElementCount - 1].textContent = "Retrieving IP and geolocation...Done";
 
 }
-
-function runSpeedTest() {
-
-  window.speedTestEngine.play()
-  console.log("Speed Test Started.. Please wait")
-  window.speedTestEngine.onFinish = speedTestRawResult => {
-  console.log(`Speed Test Summary: ${speedTestRawResult.getSummary()}`)
-  console.log(`Speed Test Score: ${speedTestRawResult.getScores()}`)
-
-  // speedTestResult = {
-  //   unloadedLatency: speedTestRawResult.getUnloadedLatency(),
-  //   unloadedJitter: speedTestRawResult.getUnloadedJitter(),
-  //   downloadedLatency: speedTestRawResult.getDownLoadedLatency(),
-  //   downloadedJitter: speedTestRawResult.getDownLoadedJitter(),
-  //   upLoadedLatency: speedTestRawResult.getUpLoadedLatency(),
-  //   upLoadedJitter: speedTestRawResult.getUpLoadedJitter(),
-  //   downloadedBandwidth: speedTestRawResult.getDownloadBandwidth(),
-  //   uploadBandwidth: speedTestRawResult.getUploadBandwidth(),
-  //   packetLoss: speedTestRawResult.getPacketLoss(),
-  // }
-  speedTestResult['unloadedLatency'] = speedTestRawResult.getUnloadedLatency()
-  speedTestResult['unloadedJitter'] = speedTestRawResult.getUnloadedJitter()
-  speedTestResult['downloadedLatency'] = speedTestRawResult.getDownLoadedLatency()
-  speedTestResult['downloadedJitter'] = speedTestRawResult.getDownLoadedJitter() 
-  speedTestResult['upLoadedLatency'] = speedTestRawResult.getUpLoadedLatency()
-  speedTestResult['upLoadedJitter'] = speedTestRawResult.getUpLoadedJitter()
-  speedTestResult['downloadedBandwidth'] = speedTestRawResult.getDownloadBandwidth()
-  speedTestResult['uploadBandwidth'] = speedTestRawResult.getUploadBandwidth()
-  speedTestResult['packetLoss'] = speedTestRawResult.getPacketLoss()
-  speedTestResult['scores'] = speedTestRawResult.getScores()
-
-  saveBrowsingStats()
-  // bwStep.textContent = "Running Speed Test......Done"
-  console.log("Speed Test Completed")
-
-  // var steps_element = document.getElementById("progress-steps")
-  // var completed_element = document.createElement('li')
-  // completed_element.textContent = "Test Completed"
-  // completed_element.id = "test-completed"
-  // steps_element.appendChild(completed_element)
-  
-  showResults()
-  chrome.runtime.sendMessage({speedTestCompleted: 1})
-  };
-
-  window.speedTestEngine.onError = (e) => {
-    console.log(e);
-    speedTestResult['error'] =  e 
-    saveBrowsingStats()
-    // bwStep.textContent = "Running Speed Test......failed"
-    // console.log("Speed Test Failed")
-    // var steps_element = document.getElementById("progress-steps")
-    // var completed_element = document.createElement('li')
-    // completed_element.textContent = "Test Completed"
-    // completed_element.id = "test-completed"
-    // steps_element.appendChild(completed_element)
-    document.getElementById('testInProgressSpinner').style.display = 'none';
-    document.getElementById('lastTestDate').textContent = 'Last test run: ' + new Date().toLocaleString();
-    document.getElementById('lastTestDate').style.display = 'block';
-    showResults()
-    console.log("Speed Test Failed")
-    chrome.runtime.sendMessage({speedTestCompleted: 1})
-  }
-  
-}
-
 function runNdt7SpeedTest(){
   chartCurrentASNBWValues()
   ndt7.test(
@@ -429,7 +228,6 @@ function runNdt7SpeedTest(){
                 locations: server.location,
             });
             console.log(`${JSON.stringify(server)}`)
-            // document.getElementById('server').innerHTML = 'Testing to: ' + server.machine + ' (' + server.location.city + ')';
             speedTestResult['Server'] = {
               machine: server.machine,
               locations: server.location,
@@ -438,23 +236,19 @@ function runNdt7SpeedTest(){
         downloadMeasurement: function (data) {
             if (data.Source === 'client') {
                 meanClientDownBW = data.Data.MeanClientMbps.toFixed(2)
-                // document.getElementById('downloadSpeed').innerHTML = meanClientDownBW + ' Mb/s';
                 downloadBWList.push(data.Data)
                 if (chartDownload) {
                   chartDownload.series[0].points[0].update(parseFloat(meanClientDownBW))
                 }
             }
-            // console.log(`Download msm:${JSON.stringify(data)}`)
         },
         downloadComplete: function (data) {
-            // (bytes/second) * (bits/byte) / (megabits/bit) = Mbps
             const serverBw = data.LastServerMeasurement.BBRInfo.BW * 8 / 1000000;
             const clientGoodput = data.LastClientMeasurement.MeanClientMbps;
             console.log(
                 `Download test is complete:
 Instantaneous server bottleneck bandwidth estimate: ${serverBw} Mbps
 Mean client goodput: ${clientGoodput} Mbps`);
-            // document.getElementById('downloadSpeed').innerHTML = clientGoodput.toFixed(2) + ' Mb/s';
             console.log(`Download data:${JSON.stringify(data)}`)
             speedTestResult["Download"]= {
               ConnectionInfo: data.LastServerMeasurement.ConnectionInfo
@@ -463,7 +257,6 @@ Mean client goodput: ${clientGoodput} Mbps`);
         uploadMeasurement: function (data) {
             if (data.Source === 'server') {
                 meanClientUpBW = (data.Data.TCPInfo.BytesReceived / data.Data.TCPInfo.ElapsedTime * 8).toFixed(2) 
-                // document.getElementById('uploadSpeed').innerHTML = meanClientUpBW + ' Mb/s';
                 if (chartUpload) {
                   chartUpload.series[0].points[0].update(parseFloat(meanClientUpBW))
                 }
@@ -471,12 +264,10 @@ Mean client goodput: ${clientGoodput} Mbps`);
             else if (data.Source === 'client') {
                 uploadBWList.push(data.Data)
             }
-            // console.log(`Upload msm:${JSON.stringify(data)}`)
         },
         uploadComplete: function(data) {
             const bytesReceived = data.LastServerMeasurement.TCPInfo.BytesReceived;
             const elapsed = data.LastServerMeasurement.TCPInfo.ElapsedTime;
-            // bytes * bits/byte / microseconds = Mbps
             const throughput =
             bytesReceived * 8 / elapsed;
             console.log(
@@ -494,9 +285,6 @@ Mean server throughput: ${throughput} Mbps`);
   ).then((exitcode) => {
     console.log("ndt7 test completed with exit code:", exitcode)
     document.getElementById('testInProgressText').style.display = 'none';
-    // document.getElementById('testInProgressSpinner').style.display = 'none';
-    // document.getElementById('lastTestDate').textContent = 'Last test run: ' + new Date().toLocaleString();
-    // document.getElementById('lastTestDate').style.display = 'block';
     showResults()
     saveBandwidthStats()
     chrome.runtime.sendMessage({speedTestCompleted: 1})
@@ -506,17 +294,8 @@ Mean server throughput: ${throughput} Mbps`);
 function openTabsRecursively(newWindowId, urls, index) {
   if (index < urls.length) {
     chrome.tabs.create({ url: urls[index], active: false, windowId: newWindowId }, function(tab) {
-      // Listen for tab updates to detect when the tab is fully loaded
-      // console.log(`Sending message to tab: ${progressTabId}`)
-      // chrome.tabs.sendMessage(progressTabId,{update: `Fetching ${requestUrl}...`, step: "New"})
-      console.log(`Creating tab for:  ${urls[index]}`)
 
-      // STATUS UPDATES
-      // sitelist_element = document.getElementById("website-list")
-      // var webSiteNameItem = document.createElement('li')
-      // webSiteNameItem.textContent = urls[index]
-      // sitelist_element.appendChild(webSiteNameItem)
-      // var siteList = document.createElement('ul')
+      console.log(`Creating tab for:  ${urls[index]}`)
 
       chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
         if (tabId === tab.id && changeInfo.status === 'complete') {
@@ -533,42 +312,22 @@ function openTabsRecursively(newWindowId, urls, index) {
     });
   }
   else if (index === urls.length) {
-    // STATUS UPDATES
-    // ol_element = document.getElementById("test-progress-list")
-    // var bwStep = document.createElement('li')
-    // bwStep.textContent = "Running Speed Test..."
-    // ol_element.appendChild(bwStep)
-
-    // runSpeedTest()
     saveBrowsingStats()
+    chrome.windows.remove(newWindowId);
+    document.getElementById('currentMeasurementContainer').style.display = 'block'
     chartCurrentASNWebValues()
     runNdt7SpeedTest()
-    // chrome.runtime.sendMessage({speedTest: "run"})
   }
 }
 
 function openTabs() {
-  // const openTabsRecursively = (urls, index) => {
-    
-  // };
-  // Start opening tabs
 
-  // STATUS UPDATES
-  // ol_element = document.getElementById("test-progress-list")
-  // var fetchWebStep = document.createElement('li')
-  // fetchWebStep.textContent = "Fetching the following websites:"
-  // ol_element.appendChild(fetchWebStep)
-  // var siteList = document.createElement('ul')
-  // siteList.id = "website-list"
-  // fetchWebStep.appendChild(siteList)
-  // var newWindow = window.open('', '_blank');
   chrome.windows.create({
     type: 'normal',
     focused: false
   }, function(newWindow) {
     // Access the ID of the new window
     openTabsRecursively(newWindow.id, urlList, 0);
-    // console.log('New window ID:', newWindow.id);
   });
   
   chrome.runtime.sendMessage({"store_msm": 1})
@@ -577,18 +336,12 @@ function openTabs() {
 
 
 async function testSteps(){
-  // const xhr = new XMLHttpRequest();
-  // xhr.open('GET', chrome.extension.getURL('show_progress.html'), true);
-  // xhr.send()
-
-  // document.getElementById('testInProgressSpinner').style.display = 'block';
-  
-  // document.getElementById('lastTestDate').style.display = 'none';
   exBtn.disabled = true
   document.getElementById('testInProgressText').style.display = 'block';
   document.getElementById("displayHeader").textContent = "Current Overview"
-  document.getElementById('currentMeasurementContainer').style.display = 'block'
+  document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'none'
+  document.getElementById("ispText").textContent = 'N/A'
   
   chrome.browsingData.remove({
     "origins": urlList
@@ -600,11 +353,6 @@ async function testSteps(){
   }, function () {}
   );
 
-  // await chrome.tabs.update({ url: "show_progress.html" }, function(tab) {
-  //   progressTabId = tab.id
-  //   console.log(`progressTabId: ${progressTabId}`)
-    
-  // })
   
   await getIPGeolocationData()
   
@@ -613,21 +361,6 @@ async function testSteps(){
   console.log("All steps run")
 }
 
-// function startTestInProgress() {
-//   // Show the spinner and update the last test date
-//   document.getElementById('testInProgressSpinner').style.display = 'block';
-//   document.getElementById('lastTestDate').style.display = 'none';
-
-//   // Simulate a delay (you can replace this with actual test logic)
-//   setTimeout(() => {
-//   // Hide the spinner when the test is completed
-//   document.getElementById('testInProgressSpinner').style.display = 'none';
-//   document.getElementById('lastTestDate').textContent = 'Last test run: ' + new Date().toLocaleString();
-//   document.getElementById('lastTestDate').style.display = 'block';
-//   }, 5000); // Simulated 5 seconds for testing purposes
-  
-  
-// }
 
 function setIcon(elementId, value) {
   const thresholds = {
@@ -644,18 +377,6 @@ function setIcon(elementId, value) {
   }
 }
 
-function setIcons(values) {
-  setIcon('webConnectTime', values.webConnectTime);
-  setIcon('webDnsLookupTime', values.webDnsLookupTime);
-  setIcon('webTtfb', values.webTtfb);
-  // setIcon('downloadSpeed', values.downloadSpeed);
-  // setIcon('uploadSpeed', values.uploadSpeed);
-  // setIcon('packetLoss', values.packetLoss);
-}
-
-// function saveMeasurementValues(values) {
-//   chrome.storage.local.set({ measurementValues: values });
-// }
 
 function saveMeasurementHist(asn,values) {
   chrome.storage.local.get(['measurementValues'], function(result) {
@@ -667,7 +388,6 @@ function saveMeasurementHist(asn,values) {
                               }})
     if (!all_values.hasOwnProperty(asn)) {
       all_values[asn] = new Object();
-      // addToASNDropdown(asn)
       addItemToDropdown("dropdownASNList",asn)
     }
     asn_values = all_values[asn]
@@ -722,91 +442,36 @@ function updateMeasurementValues() {
   chrome.storage.local.get(['measurementValues'], function(result) {
     const values = result.measurementValues || {};
 
-    
-    // document.getElementById('webConnectTime').textContent = values.webConnectTime? values.webConnectTime.toString() + " ms" : 'N/A';
-    // document.getElementById('webDnsLookupTime').textContent = values.webDnsLookupTime? values.webDnsLookupTime.toString() + " ms" : 'N/A';
-    // document.getElementById('webTtfb').textContent = values.webTtfb? values.webTtfb.toString() + " ms" : 'N/A';
-    // document.getElementById('downloadSpeed').textContent = values.downloadSpeed? values.downloadSpeed.toString() + " Mb/s" : 'N/A';
-    // document.getElementById('uploadSpeed').textContent = values.uploadSpeed? values.uploadSpeed.toString() + " Mb/s" : 'N/A';
-    // document.getElementById('packetLoss').textContent = values.packetLoss? values.packetLoss.toString() + "%" : 'N/A';
 
     var lastTestDate = values.lastTestDate || 'N/A';
     // Optionally, update the last test date
     document.getElementById('lastTestDate').textContent = 'Last test run: ' + lastTestDate;
-    // setIcons(values);
   });
 }
 
 function showResults() {
 
   document.getElementById('testInProgressText').style.display = 'none';
-  // document.getElementById('lastTestDate').textContent = 'Last test run: ' + lastTestDate;
-  // document.getElementById('lastTestDate').style.display = 'block';
-  // chartCurrentASNWebValues()
 
   const valuesToStore = {
     webBrowsingValues: webBrowsingHistValues,  
     downloadSpeed: parseFloat(meanClientDownBW),
     uploadSpeed: parseFloat(meanClientUpBW),
-    // packetLoss: avgPacketLoss,
-    // lastTestDate: lastTestDate,
   };
-  // setIcons(valuesToStore);
-  // saveMeasurementValues(valuesToStore);
   saveMeasurementHist(ipDetails['ISP_AS'], valuesToStore)
   lastTestDate = new Date().toLocaleString()
   chrome.runtime.sendMessage({'lastTestDate': lastTestDate})
   exBtn.disabled = false;
 }
 
-// testSteps()
-
-// const intervalId = setInterval(testSteps, 120000);
-
-// chrome.runtime.onSuspend.addListener(function() {
-//   clearInterval(intervalId);
-// });
 
 var exBtn = document.getElementById('startMeasurementBtn');
 
 exBtn.addEventListener('click', function() {
-  
   testSteps()
-  // var filename = "demo" + "_" + Date.now() + ".json"
-  //   var params = {
-  //       Body: JSON.stringify({key: "hello s3"}), 
-  //       Bucket: "measurements", 
-  //       Key: filename, 
-  //   }
-  //   console.log("Saving stats to object storage")
-  //   s3.putObject(params, function(err, data) {
-  //       if (err) console.log(err, err.stack) // an error occurred
-  //       else     console.log(data)           // successful response
-  //   })
 });
-// testSteps()
 
 
-// var dropdown = document.getElementById('dropdownASN');
-// dropdown.addEventListener('change', function() {
-//   // This function will be called when the selected ASN changes
-//   const selectedOption = dropdown.value;
-//   console.log('Selected option:', selectedOption);
-//   chartASNHistValues(selectedOption);
-// });
-
-
-// function populateASNDropdown() {
-//   chrome.storage.local.get(['measurementValues'], function(result) {
-//     var all_values = result.measurementValues || {};
-//     var asnOptions = Object.keys(all_values)
-//     asnOptions.forEach((option) => {
-//       const optionElement = document.createElement('option');
-//       optionElement.text = option;
-//       dropdown.appendChild(optionElement);
-//     });
-//   });
-// }
 
 function populateASNDropdown() {
   chrome.storage.local.get(['measurementValues'], function(result) {
@@ -852,11 +517,6 @@ function clickASNItemHandler() {
 
 populateASNDropdown()
 
-// function addToASNDropdown(option) {
-//   const optionElement = document.createElement('option');
-//   optionElement.text = option;
-//   dropdown.appendChild(optionElement);
-// }
 
 
 function chartASNHistValues(asn) {
@@ -946,20 +606,6 @@ function chartASNHistValues(asn) {
       avgDnsLookupTimeHistArr.push(parseFloat((value.avgDnsLookupTime.reduce((acc, num) => acc + num, 0)/ value.avgDnsLookupTime.length).toFixed(2)))
       avgTlsNegotiationTimeHistArr.push(parseFloat((value.avgTlsNegotiationTime.reduce((acc, num) => acc + num, 0)/ value.avgTlsNegotiationTime.length).toFixed(2)))
 
-      // if (!webBrowsingHistValues.hasOwnProperty(key)) {
-      //   webBrowsingHistValues[key] = {
-      //     avgTtfb: 0,
-      //     avgConnectTime: 0,
-      //     avgDnsLookupTime: 0,
-      //     avgTlsNegotiationTime: 0,
-      //   }
-      // }
-
-      // webBrowsingHistValues[key]['avgTtfb'] = avgTtfbArr.slice(-1)
-      // webBrowsingHistValues[key]['avgConnectTime'] = avgConnectTimeArr.slice(-1)
-      // webBrowsingHistValues[key]['avgDnsLookupTime'] = avgDnsLookupTimeArr.slice(-1)
-      // webBrowsingHistValues[key]['avgTlsNegotiationTime'] = avgtlsNegotiationTimeArr.slice(-1)
-
     }
 
 
@@ -998,7 +644,7 @@ function chartASNHistValues(asn) {
         }
       },
       title: {
-          text: 'Web Browsing Experience',
+          text: 'Web Browsing',
           align: 'left'
       },
       subtitle: {
@@ -1133,11 +779,19 @@ function chartCurrentASNBWValues() {
 
 // The download gauge
 chartDownload = Highcharts.chart('downBWCurrentContainer', Highcharts.merge(gaugeOptions, {
+  title: {
+    text: 'Bandwidth',
+    align: 'left'
+    },
+    subtitle: {
+        text: 'Download and Upload',
+        align: 'left'
+    },
     yAxis: {
         min: 0,
         max: 500,
         title: {
-            text: 'Download'
+            text: 'Download Speed'
         }
     },
 
@@ -1342,14 +996,8 @@ showHistBWBtn.addEventListener('click', function() {
   
 });
 
-// window.addEventListener('resize', function () {
-//   chartCurrentWebVal.setSize(window.innerWidth, window.innerHeight);
-// });
-
-
-
 function onPageLoad() {
-  // updateMeasurementValues();
+
   const currentUrl = window.location.href;
 
   // Create a URLSearchParams object with the query parameters
@@ -1375,6 +1023,54 @@ function onPageLoad() {
   }
 }
 
+
+var settingsOpnBtn = document.getElementById('settingsOpnBtn');
+var settingsCloseBtn = document.getElementById('settingsCloseBtn');
+var settingsSaveBtn = document.getElementById('settingsSaveBtn');
+var feedbackText = document.getElementById('settingsSaveFeedback');
+
+
+settingsSaveBtn.addEventListener('click', function() {
+  console.log("Settings Saved")
+  chrome.storage.local.get(['popupFrequency'], function(result) {
+    var newPopupFrequency = document.getElementById('popupFrequency').value
+    if (result.popupFrequency != newPopupFrequency){
+      console.log(`result.popupFrequency: ${result.popupFrequency}`)
+      console.log(`newPopupFrequency: ${result.popupFrequency}`)
+      chrome.runtime.sendMessage({ newAlarmFrequency: newPopupFrequency})
+      feedbackText.textContent = 'New Settings applied!'
+      feedbackText.style.color = '#32A94C'
+      feedbackText.style.display = 'block'
+      chrome.storage.local.set({popupFrequency: newPopupFrequency})
+      setTimeout(function() {
+        feedbackText.style.display = 'none'
+      }, 2500);
+      
+    }
+    else {
+      feedbackText.textContent = 'Popup Frequency value unchanged!'
+      feedbackText.style.color = '#BF2626'
+      feedbackText.style.display = 'block'
+      setTimeout(function() {
+        feedbackText.style.display = 'none'
+      }, 2500);
+    }
+  })
+});
+settingsOpnBtn.addEventListener('click', function() {
+  console.log("Settings Open")
+  // document.getElementById('lastTestContainer').style.display = 'none';
+  document.getElementById('settingsContainer').style.display = 'block';
+});
+
+settingsCloseBtn.addEventListener('click', function() {
+  console.log("Settings Close")
+  // document.getElementById('lastTestContainer').style.display = 'block';
+  document.getElementById('settingsContainer').style.display = 'none';
+});
+
+
+chrome.runtime.sendMessage({ getPopupFrequency: 1});
 chrome.runtime.sendMessage({retrieveUUID: 1})
 window.addEventListener('load', onPageLoad);
 console.log("measure_stats.js loaded")

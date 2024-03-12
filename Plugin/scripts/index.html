@@ -25,7 +25,6 @@
         line-height: 1.15;
         color: var(--dl-color-gray-black);
         background-color: var(--dl-color-gray-white);
-
       }
     </style>
     <link
@@ -102,7 +101,7 @@
     </style>
   </head>
   <body>
-    <link rel="stylesheet" href="./style.css" />
+    <link rel="stylesheet" href="./style.css"/>
     <div>
       <!-- <link href="./index.css" rel="stylesheet" /> -->
 
@@ -147,6 +146,9 @@
               </ul>
             </div>
             <button id="startMeasurementBtn" class="home-measurement button">New Measurement</button>
+            <button id="settingsOpnBtn" class="settings-index-btn">
+              <img src="img/settingsIconWhitePPT.png" width="30" height="30" alt="Settings" class="settings-index-btn">
+            </button>
           </div>
           <div class="home-container1">
             <animate-on-reveal
@@ -162,6 +164,16 @@
             </animate-on-reveal>
           </div>
         </header>
+        <!-- <div class="home-container2" id="settingsContainer" style="display: none;"> -->
+        <div class="settings-index-container" style="display: none;" id="settingsContainer">
+          <div id="settingsCloseBtn" class="close-index-btn" >&times;</div>
+          <h3>Settings</h3>
+          <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
+          <input type="number" id="popupFrequency" min="15" max="300">
+          <span class="settings-feedback-text" style="display: none;" id="settingsSaveFeedback"></span>
+          <button id="settingsSaveBtn" class="popup-index-register1">Save</button>
+        </div>
+        <!-- </div> -->
         <div class="home-container2">
           <h2 id="displayHeader" class="home-text06">Current Overview</h2>
           <ul class="home-ul list">
@@ -183,22 +195,22 @@
         </div>
         <div id="currentMeasurementContainer" class="home-current-measurement-container">
           <div class="home-web-current-outer-container">
-            <h2 class="home-text15">Web Browsing</h2>
+            <!-- <h2 class="home-text15">Web Browsing</h2> -->
             <div id="webCurrentContainer" class="home-web-current-container"></div>
           </div>
           <div class="home-bw-current-outer-container">
-            <h2 class="home-text16">Bandwidth</h2>
+            <!-- <h2 class="home-text16">Bandwidth</h2> -->
             <div id="downBWCurrentContainer" class="home-down-bw-current-container"></div>
             <div id="upBWCurrentContainer" class="home-up-bw-current-container"></div>
           </div>
         </div>
         <div id="histMeasurementContainer" class="home-current-measurement-container">
           <div class="home-web-current-outer-container">
-            <h2 class="home-text17">Web Browsing</h2>
+            <!-- <h2 class="home-text17">Web Browsing</h2> -->
             <div id="containerWebHist" class="home-web-current-container"></div>
           </div>
           <div class="home-bw-current-outer-container">
-            <h2 class="home-text18">Bandwidth</h2>
+            <!-- <h2 class="home-text18">Bandwidth</h2> -->
             <div id="containerBWHist" class="home-web-current-container"></div>
           </div>
         </div>
