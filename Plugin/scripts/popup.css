@@ -146,10 +146,10 @@
     align-self: flex-start;
   }
   .popup-ul {
-    top: var(--dl-space-space-threeunits);
+    top: var(--dl-space-space-twounits);
     left: 0px;
     width: 231px;
-    height: 91px;
+    height: 101px;
     position: absolute;
   }
   .popup-li {
@@ -167,7 +167,7 @@
   }
   .popup-text06 {
     top: 0px;
-    left: 120px;
+    left: 90px;
     color: #14617b;
     position: absolute;
   }
@@ -178,6 +178,11 @@
   }
   .popup-text08 {
     color: #14617b;
+  }
+  .popup-li3 {
+    top: var(--dl-space-space-threeunits);
+    left: 0px;
+    position: absolute;
   }
   .popup-li2 {
     top: var(--dl-space-space-twounits);

@@ -7,7 +7,34 @@ var feedbackText = document.getElementById('settingsSaveFeedback');
 var settingsContainer = document.getElementById('settingsContainer');
 var lastTestContainer = document.getElementById('lastTestContainer');
 var lastTestASN = null;
+var qualityStandard = {
+  1 : {
+    text: 'Good',
+    color: 'green'
+  },
+  2 : {
+    text: 'Ok',
+    color: 'orange'
+  },
+  3 : {
+    text: 'Poor',
+    color: 'red'
+  },
+}
 
+function printQOE(qualityMetrics) {
+  webBrowsingText.textContent = qualityStandard[qualityMetrics["web_browsing"]].text
+  webBrowsingText.style.color = qualityStandard[qualityMetrics["web_browsing"]].color
+
+  videoStreamingText.textContent = qualityStandard[qualityMetrics["video_streaming"]].text
+  videoStreamingText.style.color = qualityStandard[qualityMetrics["video_streaming"]].color
+
+  gamingText.textContent = qualityStandard[qualityMetrics["gaming"]].text
+  gamingText.style.color = qualityStandard[qualityMetrics["gaming"]].color
+
+  teleConfText.textContent = qualityStandard[qualityMetrics["teleconferencing"]].text
+  teleConfText.style.color = qualityStandard[qualityMetrics["teleconferencing"]].color
+}
 
 startAdhocTestBtn.addEventListener('click', function() {
   console.log("startAdhocTest")
@@ -97,31 +124,6 @@ settingsCloseBtn.addEventListener('click', function() {
   document.getElementById('settingsContainer').style.display = 'none';
 });
 
-// function addItemToDropdown(listId, itemName) {
-//   var newItem = document.createElement("li");
-//   newItem.setAttribute("data-thq", "thq-dropdown");
-//   newItem.setAttribute("class", "popup-dropdown list-item");
-//   // Create a div element within the li
-//   var divElement = document.createElement("div");
-//   divElement.setAttribute("data-thq", "thq-dropdown-toggle");
-//   divElement.setAttribute("class", "popup-dropdown-toggle1");
-
-//   // Create a span element within the div
-//   var spanElement = document.createElement("span");
-//   spanElement.setAttribute("class", "popup-text02");
-//   spanElement.textContent = itemName;
-//   // spanElement.addEventListener("click", clickASNItemHandler)
-//   // Append the span element to the div
-//   divElement.appendChild(spanElement);
-
-//   // Append the div element to the li
-//   newItem.appendChild(divElement);
-
-//   // Append the new li element to the existing UL
-//   document.getElementById(listId).appendChild(newItem);
-// }
-
-
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(`Received message: ${JSON.stringify(request)}`)
@@ -134,6 +136,7 @@ chrome.runtime.onMessage.addListener(
       chrome.storage.local.set({ asnDetails: request.asnDetails });
       document.getElementById('ispText').textContent = request.asnDetails.lastASN
       document.getElementById('lastTestText').textContent = request.asnDetails.lastResults.timestamp
+      printQOE(request.asnDetails.lastResults.qoe)
     }
     if (request.alarmFrequency) {
       document.getElementById('popupFrequency').value = request.alarmFrequency

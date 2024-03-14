@@ -10,6 +10,8 @@ let chartCurrentWebVal = null
 var webBrowsingValues = new Object()
 var webBrowsingHistValues = new Object()
 
+var latency = 0
+var packet_loss = 0
 var uploadBWList = []
 var downloadBWList = []
 var meanClientDownBW = 0 
@@ -19,7 +21,28 @@ var connectTimeArr = [];
 var dnsLookupTimeArr = [];
 var tlsNegotiationTimeArr = [];
 
+
+var webBrowsingText = document.getElementById('webBrowsingText')
+var videoStreamingText = document.getElementById('videoStreamingText')
+var gamingText = document.getElementById('gamingText')
+var teleConfText = document.getElementById('teleConfText')
+
 var lastTestDate;
+
+var qualityStandard = {
+  1 : {
+    text: 'Good',
+    color: 'green'
+  },
+  2 : {
+    text: 'Ok',
+    color: 'orange'
+  },
+  3 : {
+    text: 'Poor',
+    color: 'red'
+  },
+}
 
 const urlList = [
   'https://www.datadoghq.com/',
@@ -27,11 +50,21 @@ const urlList = [
   'https://hbr.org/',
   'https://www.trustpilot.com/',
   'https://www.eenadu.net/',
-  'https://dto.to/',
+  'https://www.nikkansports.com/',
+  'https://www.typeform.com/',
+  'https://coinmarketcap.com/',
+  'https://www.pbs.org/',
+  'https://www.uol.com.br/',
+  'https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js',
   'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
   'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
-  'https://www.zoom.us/',
-  'https://tubidy.cool/js/main.js'
+  'https://ssstik.io/css/ssstik/style.min.css?v=1232024',
+  'https://tubidy.cool/js/main.js',
+  'https://androidwaves.com/',
+  'https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js',
+  'https://onesignal.com/',
+  'https://www.sectigo.com/_ui/css/style.752773097.css',
+  'https://www.prnewswire.com/'
 ];
 
 var measUUID;
@@ -76,6 +109,9 @@ chrome.runtime.onMessage.addListener(
         if (request.x_cache) {
           performanceDict[requestUrl]['x_cache'] = request.x_cache
         }
+        if (request.cf_cache_status) {
+          performanceDict[requestUrl]['cf_cache_status'] = request.cf_cache_status
+        }
       } else if (request.status == "fail") {
         performanceDict[requestUrl] = {}
         performanceDict[requestUrl]['status'] = request.status
@@ -93,22 +129,27 @@ chrome.runtime.onMessage.addListener(
       performanceDict[currentUrl]['tcpConnectTime'] = request.tcpConnectTime
       performanceDict[currentUrl]['tlsNegotiationTime'] = request.tlsNegotiationTime
       performanceDict[currentUrl]['transferSize'] = request.transferSize
-      if (performanceDict[currentUrl].hasOwnProperty('serverLoc') && performanceDict[currentUrl].hasOwnProperty('x_cache')) {
+      var cache_status_hit = false
+      if (performanceDict[currentUrl].hasOwnProperty('x_cache')) {
+        cache_status_hit = performanceDict[currentUrl]['x_cache'].toLowerCase().includes('hit')
+      } else if (performanceDict[currentUrl].hasOwnProperty('cf_cache_status')) {
+        cache_status_hit = performanceDict[currentUrl]['cf_cache_status'].toLowerCase().includes('hit')
+      }
+      if (performanceDict[currentUrl].hasOwnProperty('serverLoc') && cache_status_hit) {
         var server_loc = performanceDict[currentUrl]['serverLoc']
-        if (performanceDict[currentUrl]['x_cache'].toLowerCase().includes('hit')) {
-          if (!webBrowsingValues.hasOwnProperty(server_loc)) {
-              webBrowsingValues[server_loc] = {
-                ttfbArr : [],
-                connectTimeArr: [],
-                tlsNegotiationTimeArr: [],
-                dnsLookupTimeArr: []
-              }
-          }
-          webBrowsingValues[server_loc].ttfbArr.push(request.ttfb)
-          webBrowsingValues[server_loc].connectTimeArr.push(request.tcpConnectTime)
-          webBrowsingValues[server_loc].tlsNegotiationTimeArr.push(request.tlsNegotiationTime)
-          webBrowsingValues[server_loc].dnsLookupTimeArr.push(request.dnsLookupTime)
+        if (!webBrowsingValues.hasOwnProperty(server_loc)) {
+            webBrowsingValues[server_loc] = {
+              ttfbArr : [],
+              connectTimeArr: [],
+              tlsNegotiationTimeArr: [],
+              dnsLookupTimeArr: []
+            }
         }
+        webBrowsingValues[server_loc].ttfbArr.push(request.ttfb)
+        webBrowsingValues[server_loc].connectTimeArr.push(request.tcpConnectTime)
+        webBrowsingValues[server_loc].tlsNegotiationTimeArr.push(request.tlsNegotiationTime)
+        webBrowsingValues[server_loc].dnsLookupTimeArr.push(request.dnsLookupTime)
+        
       }
     } 
     if (request.speedTest) {
@@ -252,7 +293,12 @@ Mean client goodput: ${clientGoodput} Mbps`);
             console.log(`Download data:${JSON.stringify(data)}`)
             speedTestResult["Download"]= {
               ConnectionInfo: data.LastServerMeasurement.ConnectionInfo
-            } 
+            }
+            var latency =  (data.LastServerMeasurement.TCPInfo.MinRTT / 1000)
+            // document.getElementById('').textContent = latency.toFixed(0) + ' ms'
+
+            var packet_loss = (data.LastServerMeasurement.TCPInfo.BytesRetrans / data.LastServerMeasurement.TCPInfo.BytesSent * 100)
+            // document.getElementById('').textContent = packet_loss.toFixed(2) + '%'
         },
         uploadMeasurement: function (data) {
             if (data.Source === 'server') {
@@ -276,7 +322,8 @@ Mean server throughput: ${throughput} Mbps`);
             console.log(`Upload data:${JSON.stringify(data)}`)
             speedTestResult["Upload"]= {
               ConnectionInfo: data.LastServerMeasurement.ConnectionInfo
-            } 
+            }
+
         },
         error: function (err) {
             console.log('Error while running the test:', err.message);
@@ -335,31 +382,6 @@ function openTabs() {
 
 
 
-async function testSteps(){
-  exBtn.disabled = true
-  document.getElementById('testInProgressText').style.display = 'block';
-  document.getElementById("displayHeader").textContent = "Current Overview"
-  document.getElementById('currentMeasurementContainer').style.display = 'none'
-  document.getElementById('histMeasurementContainer').style.display = 'none'
-  document.getElementById("ispText").textContent = 'N/A'
-  
-  chrome.browsingData.remove({
-    "origins": urlList
-  }, {
-    "appcache": true,
-    "cache": true,
-    "cacheStorage": true,
-    "localStorage": true,
-  }, function () {}
-  );
-
-  
-  await getIPGeolocationData()
-  
-  openTabs()
- 
-  console.log("All steps run")
-}
 
 
 function setIcon(elementId, value) {
@@ -377,14 +399,82 @@ function setIcon(elementId, value) {
   }
 }
 
+function computeQuality() {
+  var qualityMetrics = {
+    "web_browsing": null,
+    "video_streaming": null,
+    "gaming": null,
+    "teleconferencing": null
+  }
+  if (latency < 40) {
+    qualityMetrics["gaming"] = 1
+  } else if (latency >= 40 && latency <= 70) {
+    qualityMetrics["gaming"] = 2
+  } else {
+    qualityMetrics["gaming"] = 3
+  }
+
+  if (meanClientDownBW > 25) {
+    qualityMetrics["video_streaming"] = 1
+  } else if (meanClientDownBW > 5 && meanClientDownBW <= 25) {
+    qualityMetrics["video_streaming"] = 2
+  } else {
+    qualityMetrics["video_streaming"] = 3
+  }
+ 
+
+  tele_bw = Math.min(meanClientDownBW,meanClientUpBW)
+
+  if (tele_bw > 5) {
+    qualityMetrics["teleconferencing"] = 1
+  } else if (meanClientDownBW > 2 && meanClientDownBW <= 5) {
+    qualityMetrics["teleconferencing"] = 2
+  } else {
+    qualityMetrics["teleconferencing"] = 3
+  }
+  var all_ttfbs = []
+
+  for (const [key, value] of Object.entries(performanceDict)) {
+    if (value.hasOwnProperty('ttfb')) {
+      all_ttfbs.push(value['ttfb'])
+    }
+  }
+
+  var avgTTFBVal = (all_ttfbs.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / all_ttfbs.length)
+
+  if (avgTTFBVal < 200) {
+    qualityMetrics["web_browsing"] = 1
+  } else if (avgTTFBVal >=200 && avgTTFBVal <=600) {
+    qualityMetrics["web_browsing"] = 2
+  } else {
+    qualityMetrics["web_browsing"] = 3
+  }
+  return qualityMetrics
+}
+
+function printQOE(qualityMetrics) {
+  webBrowsingText.textContent = qualityStandard[qualityMetrics["web_browsing"]].text
+  webBrowsingText.style.color = qualityStandard[qualityMetrics["web_browsing"]].color
+
+  videoStreamingText.textContent = qualityStandard[qualityMetrics["video_streaming"]].text
+  videoStreamingText.style.color = qualityStandard[qualityMetrics["video_streaming"]].color
+
+  gamingText.textContent = qualityStandard[qualityMetrics["gaming"]].text
+  gamingText.style.color = qualityStandard[qualityMetrics["gaming"]].color
+
+  teleConfText.textContent = qualityStandard[qualityMetrics["teleconferencing"]].text
+  teleConfText.style.color = qualityStandard[qualityMetrics["teleconferencing"]].color
+}
 
 function saveMeasurementHist(asn,values) {
   chrome.storage.local.get(['measurementValues'], function(result) {
     var all_values = result.measurementValues || {};
     var asn_values = null;
+    qualityMetrics = computeQuality()
+    printQOE(qualityMetrics)
     chrome.runtime.sendMessage({lastASN: {
                                           ASN: asn,
-                                          lastResults : {timestamp: lastTestDate},
+                                          lastResults : {timestamp: lastTestDate, qoe: qualityMetrics},
                               }})
     if (!all_values.hasOwnProperty(asn)) {
       all_values[asn] = new Object();
@@ -421,6 +511,7 @@ function saveMeasurementHist(asn,values) {
     }
     all_values[asn] = asn_values
     chrome.storage.local.set({ measurementValues: all_values });
+    console.log(`all_values= ${JSON.stringify(all_values)}`)
     return null;
   });
 }
@@ -465,11 +556,7 @@ function showResults() {
 }
 
 
-var exBtn = document.getElementById('startMeasurementBtn');
 
-exBtn.addEventListener('click', function() {
-  testSteps()
-});
 
 
 
@@ -532,13 +619,13 @@ function chartASNHistValues(asn) {
           type: 'spline'
       },
       title: {
-          text: 'Bandwidth',
+          text: null,
           align: 'left'
       },
-      subtitle: {
-          text: 'Download and Upload Speeds',
-          align: 'left'
-      },
+      // subtitle: {
+      //     text: 'Download and Upload Speeds',
+      //     align: 'left'
+      // },
       xAxis: {
           type: 'datetime',
           dateTimeLabelFormats: {
@@ -644,13 +731,13 @@ function chartASNHistValues(asn) {
         }
       },
       title: {
-          text: 'Web Browsing',
+          text: null,
           align: 'left'
       },
-      subtitle: {
-          text: ipDetails['ISP_AS'],
-          align: 'left'
-      },
+      // subtitle: {
+      //     text: ipDetails['ISP_AS'],
+      //     align: 'left'
+      // },
       xAxis: {
           categories: serverLocationsHistArr,
           title: {
@@ -780,13 +867,13 @@ function chartCurrentASNBWValues() {
 // The download gauge
 chartDownload = Highcharts.chart('downBWCurrentContainer', Highcharts.merge(gaugeOptions, {
   title: {
-    text: 'Bandwidth',
+    text: null,
     align: 'left'
     },
-    subtitle: {
-        text: 'Download and Upload',
-        align: 'left'
-    },
+  //   subtitle: {
+  //       text: 'Download and Upload',
+  //       align: 'left'
+  //   },
     yAxis: {
         min: 0,
         max: 500,
@@ -829,7 +916,7 @@ chartUpload = Highcharts.chart('upBWCurrentContainer', Highcharts.merge(gaugeOpt
       enabled: false
     },
     series: [{
-        name: 'RPM',
+        name: 'Upload Speed',
         data: [0],
         dataLabels: {
             format:
@@ -916,13 +1003,13 @@ function chartCurrentASNWebValues() {
       }
     },
     title: {
-        text: 'Web Browsing Experience',
+        text: null,
         align: 'left'
     },
-    subtitle: {
-        text: ipDetails['ISP_AS'],
-        align: 'left'
-    },
+    // subtitle: {
+    //     text: ipDetails['ISP_AS'],
+    //     align: 'left'
+    // },
     xAxis: {
         categories: serverLocationsArr,
         title: {
@@ -1067,6 +1154,38 @@ settingsCloseBtn.addEventListener('click', function() {
   console.log("Settings Close")
   // document.getElementById('lastTestContainer').style.display = 'block';
   document.getElementById('settingsContainer').style.display = 'none';
+});
+
+
+async function testSteps(){
+  exBtn.disabled = true
+  document.getElementById('testInProgressText').style.display = 'block';
+  document.getElementById("displayHeader").textContent = "Current Overview"
+  document.getElementById('currentMeasurementContainer').style.display = 'none'
+  document.getElementById('histMeasurementContainer').style.display = 'none'
+  document.getElementById("ispText").textContent = 'N/A'
+  
+  chrome.browsingData.remove({
+    "origins": urlList
+  }, {
+    "appcache": true,
+    "cache": true,
+    "cacheStorage": true,
+    "localStorage": true,
+  }, function () {}
+  );
+
+  
+  await getIPGeolocationData()
+  
+  openTabs()
+ 
+  console.log("All steps run")
+}
+
+var exBtn = document.getElementById('startMeasurementBtn');
+exBtn.addEventListener('click', function() {
+  testSteps()
 });
 
 

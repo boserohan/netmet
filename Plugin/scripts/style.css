@@ -433,7 +433,7 @@
   .home-down-bw-current-container {
     width: 75%;
     /* border: 2px dashed rgba(120, 120, 120, 0.4); */
-    height: 212px;
+    height: 234px;
     display: flex;
     align-self: center;
     align-items: flex-start;

@@ -5,18 +5,40 @@ var capturedSpeedTestServerLoc = false
 var capturedSpeedTestServerIP = false
 var popupFrequency = 120
 // url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
-url_list = [
-  '*://www.datadoghq.com/',
-  '*://www.connatix.com/',
-  '*://hbr.org/',
-  '*://www.trustpilot.com/',
-  '*://www.eenadu.net/',
-  '*://dto.to/',
-  '*://www.bmj.com/',
-  '*://www.patreon.com/',
-  '*://www.zoom.us/',
-  '*://tubidy.cool/',
-  '*://speed.cloudflare.com/*'
+// url_list = [
+//   '*://www.datadoghq.com/',
+//   '*://www.connatix.com/',
+//   '*://hbr.org/',
+//   '*://www.trustpilot.com/',
+//   '*://www.eenadu.net/',
+//   '*://dto.to/',
+//   '*://www.bmj.com/',
+//   '*://www.patreon.com/',
+//   '*://www.zoom.us/',
+//   '*://tubidy.cool/',
+//   '*://speed.cloudflare.com/*'
+// ];
+const url_list = [
+  'https://www.datadoghq.com/',
+  'https://www.connatix.com/',
+  'https://hbr.org/',
+  'https://www.trustpilot.com/',
+  'https://www.eenadu.net/',
+  'https://www.nikkansports.com/',
+  'https://www.typeform.com/',
+  'https://coinmarketcap.com/',
+  'https://www.pbs.org/',
+  'https://www.uol.com.br/',
+  'https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js',
+  'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
+  'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
+  'https://ssstik.io/css/ssstik/style.min.css?v=1232024',
+  'https://tubidy.cool/js/main.js',
+  'https://androidwaves.com/',
+  'https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js',
+  'https://onesignal.com/',
+  'https://www.sectigo.com/_ui/css/style.752773097.css',
+  'https://www.prnewswire.com/'
 ];
 // https://speed.cloudflare.com/__down*
 urls_completed = []
@@ -251,6 +273,8 @@ chrome.webRequest.onHeadersReceived.addListener(
       
       var found_amz_cache_status = false
       var found_amz_pop_loc = false
+      var found_cf_cache_status = false
+      var found_cf_ray = false
       // Iterate through response headers
       for (const header of details.responseHeaders) {
         if (header.name.toLowerCase() === 'x-amz-cf-pop') {
@@ -262,12 +286,12 @@ chrome.webRequest.onHeadersReceived.addListener(
           found_amz_pop_loc = true
         }
         else if (header.name.toLowerCase() === 'cf-ray') {
-            // Capture the value of the custom header
-            const customHeaderValue = header.value;
-            // Log or process the captured value as needed
-            console.log(`${header.name.toLowerCase()}: ${customHeaderValue}`)
-            startTimeMap[details.requestId].cf_ray = customHeaderValue
-            break;
+          // Capture the value of the custom header
+          const customHeaderValue = header.value;
+          // Log or process the captured value as needed
+          console.log(`${header.name.toLowerCase()}: ${customHeaderValue}`)
+          startTimeMap[details.requestId].cf_ray = customHeaderValue
+          found_cf_ray = true
         }
         
         if (header.name.toLowerCase() === 'x-cache') {
@@ -278,8 +302,16 @@ chrome.webRequest.onHeadersReceived.addListener(
           startTimeMap[details.requestId].x_cache = customHeaderValue
           found_amz_cache_status = true
         }
+        else if (header.name.toLowerCase() === 'cf-cache-status') {
+          // Capture the value of the cdn header
+          const customHeaderValue = header.value;
+          // Log or process the captured value as needed
+          console.log(`${header.name.toLowerCase()}: ${customHeaderValue}`)
+          startTimeMap[details.requestId].cf_cache_status = customHeaderValue
+          found_cf_cache_status = true
+        }
 
-        if (found_amz_cache_status && found_amz_pop_loc) {
+        if ((found_amz_cache_status && found_amz_pop_loc) || (found_cf_cache_status && found_cf_ray)) {
           break;
         }
       }
