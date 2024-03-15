@@ -73,7 +73,7 @@ var urlsOpened = []
 var s3_options = {
   endpoint: "https://cmvm10.cit.tum.de:9000",
   accessKeyId: "measurementUser",
-  secretAccessKey: "nafcoj-jidqek-6ditXu", // WDgKvikfddTvrFXuC9YvRB6RzOn2w8vmDyTtNVdS
+  secretAccessKey: "nafcoj-jidqek-6ditXu",
   s3ForcePathStyle: 'true',
   signatureVersion: 'v4'
 }
@@ -128,7 +128,6 @@ chrome.runtime.onMessage.addListener(
       performanceDict[currentUrl]['dnsLookupTime'] = request.dnsLookupTime
       performanceDict[currentUrl]['tcpConnectTime'] = request.tcpConnectTime
       performanceDict[currentUrl]['tlsNegotiationTime'] = request.tlsNegotiationTime
-      performanceDict[currentUrl]['transferSize'] = request.transferSize
       var cache_status_hit = false
       if (performanceDict[currentUrl].hasOwnProperty('x_cache')) {
         cache_status_hit = performanceDict[currentUrl]['x_cache'].toLowerCase().includes('hit')
@@ -620,19 +619,18 @@ function clickASNItemHandler() {
   document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'block'
   document.getElementById("ispText").textContent = this.textContent
-  chartASNHistValues(this.textContent)
-}
-
-populateASNDropdown()
-
-
-
-function chartASNHistValues(asn) {
+  bwStatsContainer.style.display = 'none'
+  document.getElementById('packetLossText').textContent = ""
+  document.getElementById('latencyText').textContent = ""
   webBrowsingText.textContent = ''
   videoStreamingText.textContent = ''
   gamingText.textContent = ''
   teleConfText.textContent = ''
+  chartASNHistValues(this.textContent)
+}
 
+
+function chartASNHistValues(asn) {
   chrome.storage.local.get(['measurementValues'], function(result) {
     var all_values = result.measurementValues || {};
     var downloadBWData = all_values[asn]['downloadSpeed']
@@ -647,10 +645,6 @@ function chartASNHistValues(asn) {
           text: null,
           align: 'left'
       },
-      // subtitle: {
-      //     text: 'Download and Upload Speeds',
-      //     align: 'left'
-      // },
       xAxis: {
           type: 'datetime',
           dateTimeLabelFormats: {
@@ -761,10 +755,6 @@ function chartASNHistValues(asn) {
           text: null,
           align: 'left'
       },
-      // subtitle: {
-      //     text: ipDetails['ISP_AS'],
-      //     align: 'left'
-      // },
       xAxis: {
           categories: serverLocationsHistArr,
           title: {
@@ -784,9 +774,6 @@ function chartASNHistValues(asn) {
           },
           gridLineWidth: 0
       },
-      // tooltip: {
-      //     valueSuffix: ' millions'
-      // },
       plotOptions: {
           bar: {
               borderRadius: '50%',
@@ -1033,10 +1020,6 @@ function chartCurrentASNWebValues() {
         text: null,
         align: 'left'
     },
-    // subtitle: {
-    //     text: ipDetails['ISP_AS'],
-    //     align: 'left'
-    // },
     xAxis: {
         categories: serverLocationsArr,
         title: {
@@ -1048,17 +1031,17 @@ function chartCurrentASNWebValues() {
     yAxis: {
         min: 0,
         title: {
-            text: 'Latency (ms)',
-            align: 'low'
+            text: '(ms)',
+            align: 'high'
         },
         labels: {
-            overflow: 'justify'
+            overflow: 'allow'
         },
         gridLineWidth: 0
     },
-    // tooltip: {
-    //     valueSuffix: ' millions'
-    // },
+    tooltip: {
+        valueSuffix: ' ms'
+    },
     plotOptions: {
         bar: {
             borderRadius: '50%',
@@ -1233,7 +1216,7 @@ exBtn.addEventListener('click', function() {
   testSteps()
 });
 
-
+populateASNDropdown()
 chrome.runtime.sendMessage({ getPopupFrequency: 1});
 chrome.runtime.sendMessage({retrieveUUID: 1})
 window.addEventListener('load', onPageLoad);

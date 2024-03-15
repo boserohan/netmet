@@ -43,11 +43,8 @@ startAdhocTestBtn.addEventListener('click', function() {
     url: 'index.html?action=startnewtest',
     width: 600,
     height: 700,
-    // top: 100,
-    // left: 100,
     top: 100,
     left: 100
-    // state: 'maximized'
   });
 });
 
@@ -61,11 +58,8 @@ checkHistBtn.addEventListener('click', function() {
         url: `index.html?action=checkhistory&asn=${result.asnDetails.lastASN}`,
         width: 600,
         height: 700,
-        // top: 100,
-        // left: 100,
         top: 100,
         left: 100
-        // state: 'maximized'
       });
     }
 
@@ -128,11 +122,6 @@ chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(`Received message: ${JSON.stringify(request)}`)
     if (request.asnDetails) {
-      // if (request.asnDetails.hasOwnProperty('asnSet')) {
-      //   request.asnDetails.asnSet.forEach(function (value) {
-      //     addItemToDropdown('dropdownASNList',value)
-      //   })
-      // }
       chrome.storage.local.set({ asnDetails: request.asnDetails });
       document.getElementById('ispText').textContent = request.asnDetails.lastASN
       document.getElementById('lastTestText').textContent = request.asnDetails.lastResults.timestamp

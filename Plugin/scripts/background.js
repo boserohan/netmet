@@ -4,20 +4,7 @@ var capturedSpeedTestClientASN = false
 var capturedSpeedTestServerLoc = false
 var capturedSpeedTestServerIP = false
 var popupFrequency = 120
-// url_list = ["*://www.google.com/","*://evernote.com/","*://www.ietf.org/","*://www.trustpilot.com/", "*://fast.com/", "*://booking.com/*", "*://data.jsdelivr.com/*"]
-// url_list = [
-//   '*://www.datadoghq.com/',
-//   '*://www.connatix.com/',
-//   '*://hbr.org/',
-//   '*://www.trustpilot.com/',
-//   '*://www.eenadu.net/',
-//   '*://dto.to/',
-//   '*://www.bmj.com/',
-//   '*://www.patreon.com/',
-//   '*://www.zoom.us/',
-//   '*://tubidy.cool/',
-//   '*://speed.cloudflare.com/*'
-// ];
+
 const url_list = [
   'https://www.datadoghq.com/',
   'https://www.connatix.com/',
@@ -40,7 +27,7 @@ const url_list = [
   'https://www.sectigo.com/_ui/css/style.752773097.css',
   'https://www.prnewswire.com/'
 ];
-// https://speed.cloudflare.com/__down*
+
 urls_completed = []
 
 let navigationStart;
@@ -70,8 +57,6 @@ chrome.runtime.onInstalled.addListener(function(details) {
     chrome.storage.local.set({ measurementId: testId });
     chrome.runtime.sendMessage({measurementId: testId })
   }
-  if (details.reason === 'update') {
-  }
 });
 
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
@@ -84,7 +69,6 @@ chrome.webNavigation.onBeforeNavigate.addListener(details => {
 chrome.webNavigation.onDOMContentLoaded.addListener(details => {
   // Capture the DOMContentLoaded time
   domContentLoadedTime = details.timeStamp;
-  // calculatePageLoadTime();
 });
 
 chrome.webNavigation.onCompleted.addListener(details => {
@@ -105,34 +89,6 @@ chrome.webRequest.onBeforeRequest.addListener(
   function (details) {
     url = details.url
     console.log(`onBeforeRequest URL: ${details.url}`);
-    // chrome.runtime.sendMessage({measurementVal: { measurementID: testId}});
-    // if (url.includes('https://aim.cloudflare.com/__log')) {
-    //   capturedSpeedTestClientASN = false
-    //   capturedSpeedTestClientIP = false
-    //   capturedSpeedTestServerIP = false
-    //   capturedSpeedTestServerLoc = false
-    // }
-    // if (!capturedSpeedTestId) {
-    //   if (details.url.includes('https://speed.cloudflare.com/__down?')) {
-    //     const url = new URL(details.url);
-    //     const queryString = url.search.substring(1); // Exclude the leading "?"
-        
-    //     // Parse the query string into an object
-    //     const queryParams = {};
-    //     queryString.split('&').forEach(function(param) {
-    //       const keyValue = param.split('=');
-    //       const key = decodeURIComponent(keyValue[0]);
-    //       const value = keyValue.length > 1 ? decodeURIComponent(keyValue[1]) : null;
-    //       queryParams[key] = value;
-    //     });
-
-    //     // Do something with the query parameters
-    //     console.log("Cloudflare Speed Test")
-    //     console.log('Query Parameters:', queryParams);
-    //     capturedSpeedTestId = true
-
-    //   }
-    // }
   },
   { urls: url_list },
   ["blocking"]
@@ -330,7 +286,6 @@ chrome.webRequest.onErrorOccurred.addListener(
       return;
     }
     console.error('Error:', details.error);
-    // delete startTimeMap[details.requestId];
     startTimeMap[details.requestId].status = "fail";
     chrome.runtime.sendMessage(startTimeMap[details.requestId]);
   },
@@ -354,10 +309,6 @@ chrome.runtime.onMessage.addListener(
           chrome.runtime.sendMessage({measurementId: result.measurementId })
           });
       }
-      // chrome.runtime.sendMessage({lastASN: {
-      //   ASN: asn,
-      //   lastResults : {timestamp: lastTestDate},
-      // }})
       if (request.lastASN) {
 
         chrome.storage.local.set({ lastASN: request.lastASN.ASN });
@@ -370,19 +321,6 @@ chrome.runtime.onMessage.addListener(
           console.log(`asnLastResults: ${JSON.stringify(asnLastResultsUpdated)}`)
         })
 
-        // chrome.storage.local.get(['asnSet'], function(result) {
-        //   var asnSetUpdated = null;
-        //   if (!result.asnSet) {
-        //     asnSetUpdated = new Set()
-        //     console.log("New ASN set created")
-        //   } else {
-        //     asnSetUpdated = result.asnSet
-        //     console.log(`Existing ASN set: ${asnSetUpdated}`)
-        //   }
-        //   asnSetUpdated.add(request.lastASN.ASN)
-        //   chrome.storage.local.set({ asnSet: asnSetUpdated });
-        //   console.log(`asnSet: ${asnSetUpdated}`)
-        // })
       }
 
       if (request.getASNDetails) {

@@ -220,13 +220,6 @@
 }
 
 
-/* New CSS */
-
-/* .dropdown {
-  position: relative;
-  display: inline-block;
-} */
-
  .settings-btn {
   background: none;
   border: none;
@@ -247,7 +240,6 @@
 }
 
 .settings-container {
-  /* padding: 16px; */
   width: 300px;
 }
 
@@ -269,11 +261,6 @@ h3 {
   color: var(--dl-color-primary-500);
 }
 
-/* label {
-  display: block;
-  margin-bottom: 8px;
-} */
-
 input[type="number"] {
   width: 18%;
   padding: 4px;
@@ -282,15 +269,3 @@ input[type="number"] {
   border-width: 2px;
   border-color: var(--dl-color-primary-500);
 }
-
-/* .save-btn {
-  background-color: #4CAF50;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  cursor: pointer;
-}
-
-.save-btn:hover {
-  background-color: #45a049;
-}  */
