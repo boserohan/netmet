@@ -1,10 +1,12 @@
-# Extension Privacy Policy
+# NetMet Privacy Policy (chrome extension)
 
 ## Data Collection
 
-User data collected and stored explicitly from users using the NetMet chrome extension:
+User data collected and stored explicitly from users using the NetMet chrome extension include:
 1. IP Address
 2. City
+
+Data is transmitted to and stored as encrypted information within Technical University of Munich data centers. Data being used is strictly for research purposes. 
 
 ## Chrome Storage API
 
