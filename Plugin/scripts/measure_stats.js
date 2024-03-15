@@ -21,11 +21,11 @@ var connectTimeArr = [];
 var dnsLookupTimeArr = [];
 var tlsNegotiationTimeArr = [];
 
-
 var webBrowsingText = document.getElementById('webBrowsingText')
 var videoStreamingText = document.getElementById('videoStreamingText')
 var gamingText = document.getElementById('gamingText')
 var teleConfText = document.getElementById('teleConfText')
+var bwStatsContainer = document.getElementById('bwStatsContainer')
 
 var lastTestDate;
 
@@ -253,6 +253,11 @@ async function getIPGeolocationData() {
 }
 function runNdt7SpeedTest(){
   chartCurrentASNBWValues()
+  bwStatsContainer.style.display = 'block'
+  window.scrollTo({
+    top: document.documentElement.scrollHeight,
+    behavior: 'smooth' // optional, adds smooth scrolling effect
+  });
   ndt7.test(
     {
         userAcceptedDataPolicy: true,
@@ -294,11 +299,12 @@ Mean client goodput: ${clientGoodput} Mbps`);
             speedTestResult["Download"]= {
               ConnectionInfo: data.LastServerMeasurement.ConnectionInfo
             }
-            var latency =  (data.LastServerMeasurement.TCPInfo.MinRTT / 1000)
-            // document.getElementById('').textContent = latency.toFixed(0) + ' ms'
+            
+            latency =  (data.LastServerMeasurement.TCPInfo.MinRTT / 1000)
+            document.getElementById('latencyText').textContent = latency.toFixed(2) + ' ms'
 
-            var packet_loss = (data.LastServerMeasurement.TCPInfo.BytesRetrans / data.LastServerMeasurement.TCPInfo.BytesSent * 100)
-            // document.getElementById('').textContent = packet_loss.toFixed(2) + '%'
+            packet_loss = (data.LastServerMeasurement.TCPInfo.BytesRetrans / data.LastServerMeasurement.TCPInfo.BytesSent * 100)
+            document.getElementById('packetLossText').textContent = packet_loss.toFixed(2) + '%'
         },
         uploadMeasurement: function (data) {
             if (data.Source === 'server') {
@@ -335,10 +341,20 @@ Mean server throughput: ${throughput} Mbps`);
     showResults()
     saveBandwidthStats()
     chrome.runtime.sendMessage({speedTestCompleted: 1})
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth' // optional, adds smooth scrolling effect
+    });
   });
 }
 
 function openTabsRecursively(newWindowId, urls, index) {
+  chrome.storage.local.get(['extensionWindowId'], function(result) {
+    var windowId = result.extensionWindowId || null
+    if (windowId) {
+      chrome.windows.update(windowId, { focused: true });
+    }
+  })
   if (index < urls.length) {
     chrome.tabs.create({ url: urls[index], active: false, windowId: newWindowId }, function(tab) {
 
@@ -371,11 +387,13 @@ function openTabs() {
 
   chrome.windows.create({
     type: 'normal',
-    focused: false
+    focused: false,
+    state: 'minimized'
   }, function(newWindow) {
     // Access the ID of the new window
     openTabsRecursively(newWindow.id, urlList, 0);
   });
+  
   
   chrome.runtime.sendMessage({"store_msm": 1})
 }
@@ -413,6 +431,8 @@ function computeQuality() {
   } else {
     qualityMetrics["gaming"] = 3
   }
+
+  console.log(`BW latency: ${latency}`)
 
   if (meanClientDownBW > 25) {
     qualityMetrics["video_streaming"] = 1
@@ -553,6 +573,7 @@ function showResults() {
   lastTestDate = new Date().toLocaleString()
   chrome.runtime.sendMessage({'lastTestDate': lastTestDate})
   exBtn.disabled = false;
+  exBtn.classList.add("hoverable")
 }
 
 
@@ -607,7 +628,11 @@ populateASNDropdown()
 
 
 function chartASNHistValues(asn) {
-  // Perform actions based on the selected option
+  webBrowsingText.textContent = ''
+  videoStreamingText.textContent = ''
+  gamingText.textContent = ''
+  teleConfText.textContent = ''
+
   chrome.storage.local.get(['measurementValues'], function(result) {
     var all_values = result.measurementValues || {};
     var downloadBWData = all_values[asn]['downloadSpeed']
@@ -645,7 +670,7 @@ function chartASNHistValues(asn) {
       },
       tooltip: {
           headerFormat: '<b>{series.name}</b><br>',
-          pointFormat: '{point.x:%e. %b}: {point.y:.2f} m'
+          pointFormat: '{point.x:%e. %b}: {point.y:.2f} Mbps'
       },
     
       plotOptions: {
@@ -660,7 +685,9 @@ function chartASNHistValues(asn) {
               }
           }
       },
-    
+      credits: {
+        enabled: false
+      },
       colors: ['#6CF', '#39F', '#06C', '#036', '#000'],
     
       // Define the data points. All series have a year of 1970/71 in order
@@ -974,7 +1001,7 @@ function chartCurrentASNWebValues() {
         responsive: {
           rules: [{
               condition: {
-                  maxWidth: 500
+                  maxWidth: 700
               },
               chartOptions: {
                   legend: {
@@ -1022,7 +1049,7 @@ function chartCurrentASNWebValues() {
         min: 0,
         title: {
             text: 'Latency (ms)',
-            align: 'high'
+            align: 'low'
         },
         labels: {
             overflow: 'justify'
@@ -1086,10 +1113,15 @@ showHistBWBtn.addEventListener('click', function() {
 function onPageLoad() {
 
   const currentUrl = window.location.href;
+  chrome.windows.getCurrent(function(window) {
 
+    extensionWindowId = window.id;
+    chrome.storage.local.set({extensionWindowId: window.id})
+        // chrome.windows.update(windowId, { focused: true });
+  });
   // Create a URLSearchParams object with the query parameters
   const searchParams = new URLSearchParams(currentUrl.split('?')[1]);
-
+  
   // Access individual parameters
   const action_type = searchParams.get('action');
   if (action_type === 'startnewtest') {
@@ -1097,6 +1129,7 @@ function onPageLoad() {
     console.log("Start New Test")
   }
   if (action_type === 'checkhistory') {
+
     const asn_value = searchParams.get('asn');
     if (asn_value != 'null') {
       document.getElementById("displayHeader").textContent = "Historical Overview"
@@ -1159,11 +1192,23 @@ settingsCloseBtn.addEventListener('click', function() {
 
 async function testSteps(){
   exBtn.disabled = true
+  exBtn.classList.remove("hoverable")
   document.getElementById('testInProgressText').style.display = 'block';
   document.getElementById("displayHeader").textContent = "Current Overview"
   document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'none'
   document.getElementById("ispText").textContent = 'N/A'
+  bwStatsContainer.style.display = 'none'
+  document.getElementById('packetLossText').textContent = ""
+  document.getElementById('latencyText').textContent = ""
+  webBrowsingText.textContent = '?'
+  webBrowsingText.style.color = '#14617b'
+  videoStreamingText.textContent = '?'
+  videoStreamingText.style.color = '#14617b'
+  gamingText.textContent = '?'
+  gamingText.style.color = '#14617b'
+  teleConfText.textContent = '?'
+  teleConfText.style.color = '#14617b'
   
   chrome.browsingData.remove({
     "origins": urlList

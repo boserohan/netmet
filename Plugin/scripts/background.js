@@ -70,6 +70,8 @@ chrome.runtime.onInstalled.addListener(function(details) {
     chrome.storage.local.set({ measurementId: testId });
     chrome.runtime.sendMessage({measurementId: testId })
   }
+  if (details.reason === 'update') {
+  }
 });
 
 chrome.webNavigation.onBeforeNavigate.addListener(details => {
@@ -349,7 +351,7 @@ chrome.runtime.onMessage.addListener(
       if (request.retrieveUUID) {
         chrome.storage.local.get(['measurementId'], function(result) {
           console.log(`Retrieved UUID from storage: ${result.measurementId}`)
-          chrome.runtime.sendMessage({measurementId: testId })
+          chrome.runtime.sendMessage({measurementId: result.measurementId })
           });
       }
       // chrome.runtime.sendMessage({lastASN: {
@@ -423,7 +425,7 @@ function setPopupPeriodically() {
   chrome.windows.create({
     type: 'popup',
     url: 'index.html',
-    width: 700,
+    width: 600,
     height: 700,
     // top: 100,
     // left: 100,

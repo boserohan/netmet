@@ -41,7 +41,7 @@ startAdhocTestBtn.addEventListener('click', function() {
   chrome.windows.create({
     type: 'popup',
     url: 'index.html?action=startnewtest',
-    width: 700,
+    width: 600,
     height: 700,
     // top: 100,
     // left: 100,
@@ -59,7 +59,7 @@ checkHistBtn.addEventListener('click', function() {
       chrome.windows.create({
         type: 'popup',
         url: `index.html?action=checkhistory&asn=${result.asnDetails.lastASN}`,
-        width: 700,
+        width: 600,
         height: 700,
         // top: 100,
         // left: 100,

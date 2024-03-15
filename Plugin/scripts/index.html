@@ -179,19 +179,19 @@
           <ul class="home-ul list">
             <li class="list-item">
               <label class="home-text07">Web Browsing:</label>
-              <span id="webBrowsingText" class="home-text08">N/A</span>
+              <label id="webBrowsingText" class="home-text08">N/A</label>
             </li>
             <li class="list-item">
               <label class="home-text09">Video Streaming:</label>
-              <span id="videoStreamingText" class="home-text10">N/A</span>
+              <label id="videoStreamingText" class="home-text10">N/A</label>
             </li>
             <li class="list-item">
               <label class="home-text11">Gaming:</label>
-              <span id="gamingText" class="home-text12">N/A</span>
+              <label id="gamingText" class="home-text12">N/A</label>
             </li>
             <li class="list-item">
               <label class="home-text11">Teleconferencing:</label>
-              <span id="teleConfText" class="home-text12">N/A</span>
+              <label id="teleConfText" class="home-text12">N/A</label>
             </li>
           </ul>
           <label class="home-text13">ISP:</label>
@@ -204,9 +204,23 @@
           </div>
           <div class="home-bw-current-outer-container">
             <h2 class="home-text16">Bandwidth</h2>
+            <p class="home-text18">(powered by M-Lab speed test)</p>
             <div id="downBWCurrentContainer" class="home-down-bw-current-container"></div>
             <div id="upBWCurrentContainer" class="home-down-bw-current-container"></div>
+
           </div>
+        </div>
+        <div id="bwStatsContainer" class="bw-stats-container" style="display: none;">
+          <ul class="bw-ul list">
+            <li class="list-item">
+              <label class="home-text07">Packet Loss:</label>
+              <label id="packetLossText" class="home-text08"></label>
+            </li>
+            <li class="list-item">
+              <label class="home-text09">Latency:</label>
+              <label id="latencyText" class="home-text10"></label>
+            </li>
+          </ul>
         </div>
         <div id="histMeasurementContainer" class="home-current-measurement-container" style="display: none;">
           <div class="home-web-current-outer-container">
