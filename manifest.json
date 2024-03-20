@@ -1,0 +1,78 @@
+{
+  "manifest_version": 3,
+  "name": "NetMet: Meet your network performance",
+  "version": "1.0",
+  "permissions": [
+    "webRequest",
+    "storage",
+    "alarms",
+    "tabs",
+    "browsingData"
+  ],
+  "host_permissions": [
+    "https://unpkg.com/",
+    "https://cdn.skypack.dev/",
+    "https://code.highcharts.com/",
+    "https://www.datadoghq.com/",
+    "https://www.connatix.com/",
+    "https://www.twilio.com/en-us",
+    "https://www.trustpilot.com/",
+    "https://www.eenadu.net/",
+    "https://www.nikkansports.com/",
+    "https://www.typeform.com/",
+    "https://coinmarketcap.com/",
+    "https://www.pbs.org/",
+    "https://www.uol.com.br/",
+    "https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js",
+    "https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css",
+    "https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js",
+    "https://ssstik.io/css/ssstik/style.min.css?v=1232024",
+    "https://tubidy.cool/js/main.js",
+    "https://androidwaves.com/",
+    "https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js",
+    "https://onesignal.com/",
+    "https://www.sectigo.com/_ui/css/style.752773097.css",
+    "https://www.prnewswire.com/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_icon": "img/128.png",
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://www.datadoghq.com/*",
+        "https://www.connatix.com/*",
+        "https://www.twilio.com/en-us/*",
+        "https://www.trustpilot.com/*",
+        "https://www.eenadu.net/*",
+        "https://www.nikkansports.com/*",
+        "https://www.typeform.com/*",
+        "https://coinmarketcap.com/*",
+        "https://www.pbs.org/*",
+        "https://www.uol.com.br/*",
+        "https://www.teamviewer.com/*",
+        "https://www.bmj.com/*",
+        "https://www.patreon.com/*",
+        "https://ssstik.io/*",
+        "https://tubidy.cool/*",
+        "https://androidwaves.com/*",
+        "https://www.kidsa-z.com/*",
+        "https://onesignal.com/*",
+        "https://www.sectigo.com/*",
+        "https://www.prnewswire.com/*"
+      ],
+      "js": ["fetch_performancedata.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["styles.css", "index.css"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
