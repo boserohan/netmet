@@ -1,3 +1,4 @@
+![logo-NM-large-2](https://github.com/boserohan91/netmet/assets/58094973/8b10911d-336a-4c79-a2e2-10d265d56954)
 # NetMet: Meet your network performance
 
 NetMet is a chrome extension/plugin capable of deciphering your network performance. This plugin can be installed in any of your chromium based browsers (Google Chrome, Opera, Brave, Edge, etc.). It can observe various web browsing metrics based on the CDN server locations you are connecting to for some of the top websites in your region. Measuring internet speeds has never been easier, with M-Lab speed test already integrated into the plugin. With just one click of a button a 1-minute test gives you all these details which helps to troubleshoot any network issues you're facing. A feature to view past historical measurement data based on which networks you carried out measurements in, is also available, to get a quick overview.
