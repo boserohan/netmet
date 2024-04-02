@@ -5,31 +5,65 @@ var capturedSpeedTestServerLoc = false
 var capturedSpeedTestServerIP = false
 var popupFrequency = 60
 
-const url_list = [
-  'https://www.datadoghq.com/',
-  'https://www.connatix.com/',
-  'https://www.twilio.com/en-us',
-  'https://www.trustpilot.com/',
-  'https://www.eenadu.net/',
-  'https://www.nikkansports.com/',
-  'https://www.typeform.com/',
-  'https://coinmarketcap.com/',
-  'https://www.pbs.org/',
-  'https://www.uol.com.br/',
-  'https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js',
-  'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
-  'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
-  'https://ssstik.io/css/ssstik/style.min.css?v=1232024',
-  'https://tubidy.cool/js/main.js',
-  'https://androidwaves.com/',
-  'https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js',
-  'https://onesignal.com/',
-  'https://www.sectigo.com/_ui/css/style.752773097.css',
-  'https://www.prnewswire.com/'
+const url_list_common = [
+  "https://www.w3.org/",
+  "https://medium.com/",
+  "https://discord.com/",
+  "https://www.who.int/",
+  "https://www.shopify.com/",
+  "https://www.addtoany.com/",
+  "https://www.digitalocean.com/",
+  "https://www.worldbank.org/en/home",
+  "https://coinmarketcap.com/",
+  "https://www.datadoghq.com/",
+  "https://www.checkpoint.com/",
+  "https://smallpdf.com/",
+  "https://www.trustpilot.com/",
+  "https://www.merriam-webster.com/",
 ];
 
-urls_completed = []
+const url_list_regions = [
+  "https://www.time.com/",
+  "https://www.latimes.com/",
+  "https://www.pbs.org/",
+  "https://www.loc.gov/",
+  "https://www.caliente.mx/",
+  "https://creativecommons.org/",
+  "https://www.hostgator.com.br/",
+  "https://www.ig.com.br/",
+  "https://olhardigital.com.br/",
+  "https://www.meteored.com.ar/",
+  "https://nubank.com.br/",
+  "https://www.placardefutebol.com.br/",
+  "https://european-union.europa.eu/index_en",
+  "https://www.politico.eu/",
+  "https://www.tagesspiegel.de/",
+  "https://www.thesun.co.uk/",
+  "https://www.t-online.de/",
+  "https://www.repubblica.it/",
+  "https://hochi.news/",
+  "https://www.hmetro.com.my/",
+  "https://line.me/en/",
+  "https://www.timenews.co.id/",
+  "https://www.biglobe.ne.jp/",
+  "https://www.thestar.com.my/",
+  "https://www.unimelb.edu.au/",
+  "https://www.griffith.edu.au/",
+  "https://hipages.com.au/",
+  "https://www.nsw.gov.au/",
+  "https://www.unsw.edu.au/",
+  "https://www.telstra.com.au/",
+  "https://www.ietf.org/",
+  "https://about.gitlab.com/",
+  "https://surfshark.com/",
+  "https://www.geeksforgeeks.org/",
+  "https://www.warnerbros.com/",
+  "https://brave.com/"
+];
 
+var url_list = url_list_common.concat(url_list_regions)
+
+urls_completed = []
 
 function generateUUID() {
   return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -148,8 +182,10 @@ chrome.webRequest.onHeadersReceived.addListener(
           const customHeaderValue = header.value;
           // Log or process the captured value as needed
           console.log(`${header.name.toLowerCase()}: ${customHeaderValue}`)
-          startTimeMap[details.requestId].x_cache = customHeaderValue
-          found_amz_cache_status = true
+          if (customHeaderValue.toLowerCase().includes('cloudfront')) {
+            startTimeMap[details.requestId].x_cache = customHeaderValue
+            found_amz_cache_status = true
+          }
         }
         else if (header.name.toLowerCase() === 'cf-cache-status') {
           // Capture the value of the cdn header
@@ -162,6 +198,18 @@ chrome.webRequest.onHeadersReceived.addListener(
 
         if ((found_amz_cache_status && found_amz_pop_loc) || (found_cf_cache_status && found_cf_ray)) {
           break;
+        }
+      }
+      if (found_amz_pop_loc) {
+        if (found_cf_cache_status) {
+          console.log("Error in fetching right cache status")
+          startTimeMap[details.requestId].cf_cache_status = null
+        }
+      }
+      if (found_cf_ray) {
+        if (found_amz_cache_status) {
+          console.log("Error in fetching right cache status")
+          startTimeMap[details.requestId].x_cache = null
         }
       }
       // Return the responseHeaders property to allow the response to continue

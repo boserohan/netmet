@@ -43,28 +43,108 @@ var qualityStandard = {
   },
 }
 
+// const urlList = [
+//   'https://www.datadoghq.com/',
+//   'https://www.connatix.com/',
+//   'https://www.twilio.com/en-us',
+//   'https://www.trustpilot.com/',
+//   'https://www.eenadu.net/',
+//   'https://www.nikkansports.com/',
+//   'https://www.typeform.com/',
+//   'https://coinmarketcap.com/',
+//   'https://www.pbs.org/',
+//   'https://www.uol.com.br/',
+//   'https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js',
+//   'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
+//   'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
+//   'https://ssstik.io/css/ssstik/style.min.css?v=1232024',
+//   'https://tubidy.cool/js/main.js',
+//   'https://androidwaves.com/',
+//   'https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js',
+//   'https://onesignal.com/',
+//   'https://www.sectigo.com/_ui/css/style.752773097.css',
+//   'https://www.prnewswire.com/'
+// ];
+
 const urlList = [
-  'https://www.datadoghq.com/',
-  'https://www.connatix.com/',
-  'https://www.twilio.com/en-us',
-  'https://www.trustpilot.com/',
-  'https://www.eenadu.net/',
-  'https://www.nikkansports.com/',
-  'https://www.typeform.com/',
-  'https://coinmarketcap.com/',
-  'https://www.pbs.org/',
-  'https://www.uol.com.br/',
-  'https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js',
-  'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
-  'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
-  'https://ssstik.io/css/ssstik/style.min.css?v=1232024',
-  'https://tubidy.cool/js/main.js',
-  'https://androidwaves.com/',
-  'https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js',
-  'https://onesignal.com/',
-  'https://www.sectigo.com/_ui/css/style.752773097.css',
-  'https://www.prnewswire.com/'
+  "https://www.w3.org/",
+  "https://medium.com",
+  "https://discord.com",
+  "https://www.who.int",
+  "https://www.shopify.com",
+  "https://www.addtoany.com",
+  "https://www.digitalocean.com",
+  "https://www.worldbank.org/en/home",
+  "https://coinmarketcap.com",
+  "https://www.datadoghq.com",
+  "https://www.checkpoint.com",
+  "https://smallpdf.com/",
+  "https://www.trustpilot.com",
+  "https://www.merriam-webster.com",
 ];
+
+const urlListNA = [
+  "https://www.time.com/",
+  "https://www.latimes.com/",
+  "https://www.pbs.org/",
+  "https://www.loc.gov/",
+  "https://www.caliente.mx/",
+  "https://creativecommons.org/",
+]
+
+const urlListSA = [
+  "https://www.hostgator.com.br/",
+  "https://www.ig.com.br/",
+  "https://olhardigital.com.br/",
+  "https://www.meteored.com.ar/",
+  "https://nubank.com.br/",
+  "https://www.placardefutebol.com.br/"
+]
+
+const urlListEU = [
+  "https://european-union.europa.eu/index_en",
+  "https://www.politico.eu/",
+  "https://www.tagesspiegel.de/",
+  "https://www.thesun.co.uk/",
+  "https://www.t-online.de/",
+  "https://www.repubblica.it/",
+];
+
+const urlListAS = [
+  "https://hochi.news/",
+  "https://www.hmetro.com.my/",
+  "https://line.me/en/",
+  "https://www.timenews.co.id/",
+  "https://www.biglobe.ne.jp/",
+  "https://www.thestar.com.my/",
+];
+
+const urlListAU = [
+  "https://www.unimelb.edu.au/",
+  "https://www.griffith.edu.au/",
+  "https://hipages.com.au/",
+  "https://www.nsw.gov.au/",
+  "https://www.unsw.edu.au/",
+  "https://www.telstra.com.au/",
+];
+
+const urlListAF = [
+"https://www.ietf.org/",
+"https://about.gitlab.com/",
+"https://surfshark.com/",
+"https://www.geeksforgeeks.org/",
+"https://www.warnerbros.com/",
+"https://brave.com/"
+];
+
+const continentToUrlList = {
+  'NA': urlListNA,
+  'SA': urlListSA,
+  'EU': urlListEU,
+  'AF': urlListAF,
+  'OC': urlListAU,
+  'AS': urlListAS
+}
 
 var measUUID;
 var urlsOpened = []
@@ -235,19 +315,20 @@ function setMeasurementId(testId) {
 async function getIPGeolocationData() {
 
 
-    var url = 'http://ip-api.com/json/'
+    var url = 'http://ip-api.com/json/?fields=query,city,as,continentCode'
     const ipRequest = new Request(url)
     const response = await fetch(ipRequest, {cache: "no-store"})
     const ipJsonDetails = await response.json()
 
     console.log(ipJsonDetails)
 
-
     ipDetails['IP']=ipJsonDetails.query
     ipDetails['City']=ipJsonDetails.city
     ipDetails['ISP_AS']=ipJsonDetails.as
+    ipDetails['Continent'] = ipJsonDetails.continentCode
     document.getElementById("ispText").textContent = ipJsonDetails.as
 
+    return ipJsonDetails.continentCode
 }
 function runNdt7SpeedTest(){
   chartCurrentASNBWValues()
@@ -345,6 +426,7 @@ function openTabsRecursively(newWindowId, urls, index) {
       console.log(`Creating tab for:  ${urls[index]}`)
 
       chrome.tabs.onUpdated.addListener(function listener(tabId, changeInfo) {
+        console.log(`Changeinfo.status = ${changeInfo.status} for ${urls[index]}`)
         if (tabId === tab.id && changeInfo.status === 'complete') {
           // Remove the listener after the tab is fully loaded
           chrome.tabs.onUpdated.removeListener(listener);
@@ -367,24 +449,18 @@ function openTabsRecursively(newWindowId, urls, index) {
   }
 }
 
-function openTabs() {
-
+function openTabs(allUrls) {
+  console.log(allUrls)
   chrome.windows.create({
     type: 'normal',
     focused: false,
     state: 'minimized'
   }, function(newWindow) {
     // Access the ID of the new window
-    openTabsRecursively(newWindow.id, urlList, 0);
+    openTabsRecursively(newWindow.id, allUrls, 0);
   });
-  
-  
   chrome.runtime.sendMessage({"store_msm": 1})
 }
-
-
-
-
 
 function setIcon(elementId, value) {
   const thresholds = {
@@ -1183,6 +1259,15 @@ async function testSteps(){
   testStatusText.style.color ='#E14747'
   testStatusText.textContent = "In Progress"
   
+
+
+  
+  var continentCode = await getIPGeolocationData()
+
+  regionUrls = continentToUrlList[continentCode]
+
+  var allUrls = urlList.concat(regionUrls) 
+
   chrome.browsingData.remove({
     "origins": urlList
   }, {
@@ -1192,11 +1277,8 @@ async function testSteps(){
     "localStorage": true,
   }, function () {}
   );
-
   
-  await getIPGeolocationData()
-  
-  openTabs()
+  openTabs(allUrls)
  
   console.log("All steps run")
 }
