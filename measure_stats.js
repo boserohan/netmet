@@ -70,9 +70,9 @@ var measUUID;
 var urlsOpened = []
 
 var s3_options = {
-  endpoint: "https://cmvm10.cit.tum.de:9000",
-  accessKeyId: "measurementUser",
-  secretAccessKey: "nafcoj-jidqek-6ditXu",
+  endpoint: "<TUM-server-IP>",
+  accessKeyId: "<demoUser>",
+  secretAccessKey: "<accesskey>",
   s3ForcePathStyle: 'true',
   signatureVersion: 'v4'
 }
