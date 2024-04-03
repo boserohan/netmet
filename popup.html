@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
-    <title>Popup - Agreeable Everlasting Dolphin</title>
-    <meta property="og:title" content="Popup - Agreeable Everlasting Dolphin" />
+    <title>NetMet: Meet your network performance</title>
+    <meta property="og:title" content="NetMet: Meet your network performance" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta charset="utf-8" />
     <meta property="twitter:card" content="summary_large_image" />
@@ -116,8 +116,20 @@
           <div class="settings-container">
             <div id="settingsCloseBtn" class="close-btn">&times;</div>
             <h3>Settings</h3>
-            <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
-            <input type="number" id="popupFrequency" min="15" max="300">
+            <ul>
+              <li>
+                <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
+                <input type="number" id="popupFrequency" min="15" max="300" style="height: 18px;">
+              </li>
+              <li>
+                <label class="popup-text10">User Id:</label>
+                <label class="popup-text10" id="userIdNum">N/A</label>
+              </li>
+              <li>
+                <label class="popup-text10">App Version:</label>
+                <label class="popup-text10" id="appVerNum">N/A</label>
+              </li>
+            </ul>
             <span class="settings-feedback-text" style="display: none;" id="settingsSaveFeedback"></span>
             <button id="settingsSaveBtn" class="popup-register1 button">Save</button>
           </div>
@@ -157,10 +169,6 @@
     <script
       defer=""
       src="teleporthq/index.umd.js"
-    ></script>
-    <script
-      defer=""
-      src="teleporthq/animate-on-reveal.umd.js"
     ></script>
     <script src="popup.js"></script>
   </body>

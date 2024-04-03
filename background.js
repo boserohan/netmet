@@ -326,6 +326,7 @@ chrome.alarms.onAlarm.addListener(function(alarm) {
   }
 });
 
+
 function setAlarm(frequencyInMins) {
   chrome.storage.local.set({ alarmFrequency: frequencyInMins });
   chrome.alarms.create('setPopupAlarm', {

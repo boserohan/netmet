@@ -34,6 +34,14 @@
   --dl-space-space-threeunits: 48px;
   --dl-space-space-oneandhalfunits: 24px;
 }
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0; }
+  100% { opacity: 1; }
+}
+.blinking {
+  animation: blink 1s infinite;
+}
 .button {
   color: var(--dl-color-gray-black);
   display: inline-block;
@@ -116,6 +124,11 @@
   justify-content: space-between;
   background-color: var(--dl-color-primary-500);
 }
+.header-text {
+  color: rgb(20, 97, 123);
+  align-items: center;
+  display: none;
+}
 .home-text {
   color: #ffffff;
   z-index: 100;
@@ -125,6 +138,17 @@
   border-width: 0px;
   border-radius: var(--dl-radius-radius-radius4);
   text-transform: capitalize;
+}
+.userid-text {
+  color: #14617b;
+  text-align: center;
+}
+.userid-num {
+  color: #14617b;
+  text-align: center;
+}
+ul {
+  list-style-type: none;
 }
 .home-btn-group {
   top: 30px;

@@ -6,6 +6,9 @@ var settingsSaveBtn = document.getElementById('settingsSaveBtn');
 var feedbackText = document.getElementById('settingsSaveFeedback');
 var settingsContainer = document.getElementById('settingsContainer');
 var lastTestContainer = document.getElementById('lastTestContainer');
+var manifest = chrome.runtime.getManifest();
+var appVersion = manifest.version;
+document.getElementById('appVerNum').textContent = appVersion
 var lastTestASN = null;
 var qualityStandard = {
   1 : {
@@ -131,8 +134,12 @@ chrome.runtime.onMessage.addListener(
       document.getElementById('popupFrequency').value = request.alarmFrequency
       chrome.storage.local.set({popupFrequency: request.alarmFrequency})
     }
+    if (request.measurementId) {
+      document.getElementById('userIdNum').textContent = request.measurementId
+    }
   })
 
 chrome.runtime.sendMessage({ getASNDetails: 1});
 chrome.runtime.sendMessage({ getPopupFrequency: 1});
+chrome.runtime.sendMessage({retrieveUUID: 1})
 console.log('popup.js loaded')

@@ -25,6 +25,11 @@ var gamingText = document.getElementById('gamingText')
 var teleConfText = document.getElementById('teleConfText')
 var bwStatsContainer = document.getElementById('bwStatsContainer')
 var testStatusText = document.getElementById('testStatusText')
+var testProgressHeader = document.getElementById('inProgressHeader')
+var homeBtnGroup = Array.from(document.getElementsByClassName('home-btn-group'))
+var manifest = chrome.runtime.getManifest();
+var appVersion = manifest.version;
+document.getElementById('appVerNum').textContent = appVersion
 
 var lastTestDate;
 
@@ -42,29 +47,6 @@ var qualityStandard = {
     color: 'red'
   },
 }
-
-// const urlList = [
-//   'https://www.datadoghq.com/',
-//   'https://www.connatix.com/',
-//   'https://www.twilio.com/en-us',
-//   'https://www.trustpilot.com/',
-//   'https://www.eenadu.net/',
-//   'https://www.nikkansports.com/',
-//   'https://www.typeform.com/',
-//   'https://coinmarketcap.com/',
-//   'https://www.pbs.org/',
-//   'https://www.uol.com.br/',
-//   'https://www.teamviewer.com/etc.clientlibs/teamviewer/clientlibs/foundation/clientlib-commerce.20240312103050.min.js',
-//   'https://www.bmj.com/_next/static/css/0125e1088e5e73c9.css',
-//   'https://www.patreon.com/_assets_patreon_marketing/_next/static/chunks/main-4016249e4d22fbe7.js',
-//   'https://ssstik.io/css/ssstik/style.min.css?v=1232024',
-//   'https://tubidy.cool/js/main.js',
-//   'https://androidwaves.com/',
-//   'https://www.kidsa-z.com/js/angular/kids.module--clt_24_03_014-1709834777.js',
-//   'https://onesignal.com/',
-//   'https://www.sectigo.com/_ui/css/style.752773097.css',
-//   'https://www.prnewswire.com/'
-// ];
 
 const urlList = [
   "https://www.w3.org/",
@@ -160,11 +142,13 @@ var s3_options = {
 
 var s3 = new AWS.S3(s3_options)
 
+
 chrome.runtime.onMessage.addListener(
   function(request, sender, sendResponse) {
     console.log(`request: ${JSON.stringify(request)}`)
     if (request.measurementId) {
       setMeasurementId(request.measurementId)
+      document.getElementById('userIdNum').textContent = request.measurementId
     }
     if (request.status) {
       urlsOpened.push(request.requestUrl)
@@ -412,7 +396,7 @@ Mean server throughput: ${throughput} Mbps`);
     },
   ).then((exitcode) => {
     console.log("ndt7 test completed with exit code:", exitcode)
-    document.getElementById('testInProgressText').style.display = 'none';
+    // document.getElementById('testInProgressText').style.display = 'none';
     showResults()
     saveBandwidthStats()
     chrome.runtime.sendMessage({speedTestCompleted: 1})
@@ -622,7 +606,7 @@ function updateMeasurementValues() {
 
 function showResults() {
 
-  document.getElementById('testInProgressText').style.display = 'none';
+  // document.getElementById('testInProgressText').style.display = 'none';
 
   const valuesToStore = {
     webBrowsingValues: webBrowsingHistValues,  
@@ -636,12 +620,13 @@ function showResults() {
   exBtn.classList.add("hoverable")
   testStatusText.style.color = '#32A94C'
   testStatusText.textContent = 'Completed'
+  homeBtnGroup.forEach(function(eachElement) {
+    eachElement.style.display = 'block'
+  })
+  testProgressHeader.classList.remove("blinking")
+  testProgressHeader.style.color = '#32A94C'
+  testProgressHeader.textContent = "Test Completed"
 }
-
-
-
-
-
 
 function populateASNDropdown() {
   chrome.storage.local.get(['measurementValues'], function(result) {
@@ -685,11 +670,15 @@ function clickASNItemHandler() {
   bwStatsContainer.style.display = 'none'
   document.getElementById('packetLossText').textContent = ""
   document.getElementById('latencyText').textContent = ""
+  document.getElementById('infoHeader').style.display = 'none'
   webBrowsingText.textContent = ''
   videoStreamingText.textContent = ''
   gamingText.textContent = '' 
   teleConfText.textContent = ''
   testStatusText.textContent = ''
+  homeBtnGroup.forEach(function(eachElement) {
+    eachElement.style.display = 'block'
+  })
   chartASNHistValues(this.textContent)
 }
 
@@ -1158,23 +1147,21 @@ showHistBWBtn.addEventListener('click', function() {
 });
 
 function onPageLoad() {
-
+  testStatusText.style.color = '#14617b'
+  testStatusText.textContent = 'N/A'
+  homeBtnGroup.forEach(function(eachElement) {
+    eachElement.style.display = 'block'
+  })
   const currentUrl = window.location.href;
   chrome.windows.getCurrent(function(window) {
 
     extensionWindowId = window.id;
     chrome.storage.local.set({extensionWindowId: window.id})
-        // chrome.windows.update(windowId, { focused: true });
   });
   // Create a URLSearchParams object with the query parameters
   const searchParams = new URLSearchParams(currentUrl.split('?')[1]);
-  
   // Access individual parameters
   const action_type = searchParams.get('action');
-  if (action_type === 'startnewtest') {
-    testSteps()
-    console.log("Start New Test")
-  }
   if (action_type === 'checkhistory') {
 
     const asn_value = searchParams.get('asn');
@@ -1187,6 +1174,10 @@ function onPageLoad() {
       console.log(`Check history for asn: ${asn_value}`)
     }
     
+  }
+  else {
+    testSteps()
+    console.log("Started New Test")
   }
 }
 
@@ -1240,7 +1231,7 @@ settingsCloseBtn.addEventListener('click', function() {
 async function testSteps(){
   exBtn.disabled = true
   exBtn.classList.remove("hoverable")
-  document.getElementById('testInProgressText').style.display = 'block';
+  // document.getElementById('testInProgressText').style.display = 'block';
   document.getElementById("displayHeader").textContent = "Current Overview"
   document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'none'
@@ -1258,9 +1249,13 @@ async function testSteps(){
   teleConfText.style.color = '#14617b'
   testStatusText.style.color ='#E14747'
   testStatusText.textContent = "In Progress"
-  
-
-
+  homeBtnGroup.forEach(function(eachElement) {
+    eachElement.style.display = 'none'
+  })
+  document.getElementById('infoHeader').style.display = 'block'
+  testProgressHeader.style.color ='#E14747'
+  testProgressHeader.textContent = 'Test in progress...'
+  testProgressHeader.classList.add("blinking")
   
   var continentCode = await getIPGeolocationData()
 
@@ -1297,6 +1292,13 @@ window.onerror = function(message, source, lineno, colno, error) {
   // Handle the error here
   testStatusText.style.color = '#A22020'
   testStatusText.textContent = "Failed"
+  homeBtnGroup.forEach(function(eachElement) {
+    eachElement.style.display = 'block'
+  })
+  testProgressHeader.classList.remove("blinking")
+  testProgressHeader.style.color = '#A22020'
+  testProgressHeader.textContent = "Failed"
+
   console.error("An error occurred:", message, "at", source, "line", lineno, "column", colno);
 };
 console.log("measure_stats.js loaded")
