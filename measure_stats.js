@@ -132,9 +132,9 @@ var measUUID;
 var urlsOpened = []
 
 var s3_options = {
-  endpoint: "<TUM-server-IP>",
-  accessKeyId: "<demoUser>",
-  secretAccessKey: "<accesskey>",
+  endpoint: "https://cmvm10.cit.tum.de:9000",
+  accessKeyId: "measurementUser",
+  secretAccessKey: "nafcoj-jidqek-6ditXu",
   s3ForcePathStyle: 'true',
   signatureVersion: 'v4'
 }
@@ -698,6 +698,9 @@ function chartASNHistValues(asn) {
           text: null,
           align: 'left'
       },
+      accessibility: {
+          enabled: false
+      },
       xAxis: {
           type: 'datetime',
           dateTimeLabelFormats: {
@@ -807,6 +810,9 @@ function chartASNHistValues(asn) {
       title: {
           text: null,
           align: 'left'
+      },
+      accessibility: {
+        enabled: false
       },
       xAxis: {
           categories: serverLocationsHistArr,
@@ -941,6 +947,9 @@ chartDownload = Highcharts.chart('downBWCurrentContainer', Highcharts.merge(gaug
   //       text: 'Download and Upload',
   //       align: 'left'
   //   },
+  accessibility: {
+    enabled: false
+  },
     yAxis: {
         min: 0,
         max: 500,
@@ -972,7 +981,10 @@ chartDownload = Highcharts.chart('downBWCurrentContainer', Highcharts.merge(gaug
 
 // The upload gauge
 chartUpload = Highcharts.chart('upBWCurrentContainer', Highcharts.merge(gaugeOptions, {
-    yAxis: {
+  accessibility: {
+    enabled: false
+  },  
+  yAxis: {
         min: 0,
         max: 500,
         title: {
@@ -1072,6 +1084,9 @@ function chartCurrentASNWebValues() {
     title: {
         text: null,
         align: 'left'
+    },
+    accessibility: {
+      enabled: false
     },
     xAxis: {
         categories: serverLocationsArr,
