@@ -1,4 +1,6 @@
 ![128](https://github.com/boserohan91/netmet/assets/58094973/7f1e1492-f1e2-4a7a-803c-2b2bff979759)
+![tum_logo](https://github.com/boserohan91/netmet/assets/58094973/c720b8b0-f8b1-4d39-9bb4-7c2f3c84d5fc)
+
 # NetMet: Meet your network performance
 
 
@@ -15,6 +17,9 @@ Chrome Extension: [Get NetMet from Chrome Web Store](https://chromewebstore.goog
 
 After installing the extension, a periodic popup (frequency adjustable through settings) window appears if the browser is running on your system to allow you take a new 1-minute measurement with a click of a button. Frequent measurements help us to assess the quality of your connection and various bottlenecks affecting it. 
 Upon starting a new measurement, a new browser window is opened in a minimised mode and you can get back to what you were doing, while background [Javascript (JS)](https://developer.mozilla.org/en-US/docs/Web/JavaScript#) based scripts run in the minimised window to fetch top web resources hosted in popular CDNs (Content Delivery Networks) in your region. The script is responsible for running the test and gathering measurement data. NetMet uses [Chrome Developer APIs](https://developer.chrome.com/docs/extensions/reference/api) for this purpose. The web browsing metrics are captured using browser's Performance API, specifically [Resource Timing](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing). After measuring web browsing statistics, an integrated [M-Lab speed test](https://speed.measurementlab.net/#/) is executed to measure uplink and downlink performance. At the end of the measurement, the results are displayed on the popup window and the same result data is transmitted to securely hosted servers.
+
+## Data Collection
+Please go through our data collection policies [here](https://github.com/boserohan91/netmet/blob/main/netmet-privacy-policy.md). **We do not capture any sensitive user data**. For any concerns please contact me through [email](mailto:rohan.bose@tum.de).
 
 ## Issues?
 
