@@ -33,6 +33,9 @@ document.getElementById('appVerNum').textContent = appVersion
 
 var lastTestDate;
 
+var windowCloseTimeLeft = 60;
+var timerCloseInterval;
+
 var qualityStandard = {
   1 : {
     text: 'Good',
@@ -255,6 +258,16 @@ function saveBandwidthStats() {
       if (err) console.log(err, err.stack) // an error occurred
       else     console.log(data)           // successful response
   })
+
+  windowCloseTimeLeft = 60
+  document.getElementById("timerLabel").textContent = windowCloseTimeLeft
+  document.getElementById("timerDiv").style.display = 'block'
+  timerCloseInterval = setInterval(windowCloseTimer, 1000)
+  document.getElementById("stopTimerLink").addEventListener('click', function(event) {
+    event.preventDefault();
+    clearInterval(timerCloseInterval);
+    document.getElementById("timerDiv").style.display = 'none'
+  });
 }
 
 function saveBrowsingStats() {
@@ -294,6 +307,17 @@ function getMeasurementId() {
 
 function setMeasurementId(testId) {
   measUUID=testId;
+}
+
+function windowCloseTimer() {
+  document.getElementById("timerLabel").textContent = windowCloseTimeLeft;
+  
+  if (windowCloseTimeLeft === 0) {
+    document.getElementById("timerDiv").style.display = 'none'
+    window.close()
+  } else {
+    windowCloseTimeLeft--;
+  }
 }
 
 async function getIPGeolocationData() {
@@ -348,13 +372,9 @@ function runNdt7SpeedTest(){
             }
         },
         downloadComplete: function (data) {
-            const serverBw = data.LastServerMeasurement.BBRInfo.BW * 8 / 1000000;
+          try {
+              // const serverBw = data.LastServerMeasurement.BBRInfo.BW * 8 / 1000000;
             const clientGoodput = data.LastClientMeasurement.MeanClientMbps;
-            console.log(
-                `Download test is complete:
-Instantaneous server bottleneck bandwidth estimate: ${serverBw} Mbps
-Mean client goodput: ${clientGoodput} Mbps`);
-            console.log(`Download data:${JSON.stringify(data)}`)
             speedTestResult["Download"]= {
               ConnectionInfo: data.LastServerMeasurement.ConnectionInfo
             }
@@ -364,6 +384,11 @@ Mean client goodput: ${clientGoodput} Mbps`);
 
             packet_loss = (data.LastServerMeasurement.TCPInfo.BytesRetrans / data.LastServerMeasurement.TCPInfo.BytesSent * 100)
             document.getElementById('packetLossText').textContent = packet_loss.toFixed(2) + '%'
+
+          } catch (error) {
+            console.log('Error:', error.message)
+          } 
+            
         },
         uploadMeasurement: function (data) {
             if (data.Source === 'server') {
@@ -377,6 +402,7 @@ Mean client goodput: ${clientGoodput} Mbps`);
             }
         },
         uploadComplete: function(data) {
+          try {
             const bytesReceived = data.LastServerMeasurement.TCPInfo.BytesReceived;
             const elapsed = data.LastServerMeasurement.TCPInfo.ElapsedTime;
             const throughput =
@@ -388,7 +414,9 @@ Mean server throughput: ${throughput} Mbps`);
             speedTestResult["Upload"]= {
               ConnectionInfo: data.LastServerMeasurement.ConnectionInfo
             }
-
+          } catch (error) {
+            console.log('Error:', error.message)
+          }
         },
         error: function (err) {
             console.log('Error while running the test:', err.message);

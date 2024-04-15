@@ -665,6 +665,11 @@ input[type="number"] {
   color: #14617b;
 }
 
+#stopTimerLink {
+  text-decoration: underline;
+  color: purple;
+}
+
 @media(max-width: 767px) {
   .home-header {
     padding-left: var(--dl-space-space-twounits);
