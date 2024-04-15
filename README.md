@@ -1,5 +1,11 @@
-![128](https://github.com/boserohan91/netmet/assets/58094973/7f1e1492-f1e2-4a7a-803c-2b2bff979759)
-![tum_logo](https://github.com/boserohan91/netmet/assets/58094973/c720b8b0-f8b1-4d39-9bb4-7c2f3c84d5fc)
+
+<img align="left" width="200" height="128" src="https://github.com/boserohan91/netmet/assets/58094973/7f1e1492-f1e2-4a7a-803c-2b2bff979759">
+<img align="right" width="128" height="128" src="https://github.com/boserohan91/netmet/assets/58094973/c720b8b0-f8b1-4d39-9bb4-7c2f3c84d5fc">
+
+
+
+<br/><br/>
+
 
 # NetMet: Meet your network performance
 
