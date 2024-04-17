@@ -21,8 +21,24 @@ Chrome Extension: [Get NetMet from Chrome Web Store](https://chromewebstore.goog
 
 ## How the test works?
 
-After installing the extension, a periodic popup (frequency adjustable through settings) window appears if the browser is running on your system to allow you take a new 1-minute measurement with a click of a button. Frequent measurements help us to assess the quality of your connection and various bottlenecks affecting it. 
-Upon starting a new measurement, a new browser window is opened in a minimised mode and you can get back to what you were doing, while background [Javascript (JS)](https://developer.mozilla.org/en-US/docs/Web/JavaScript#) based scripts run in the minimised window to fetch top web resources hosted in popular CDNs (Content Delivery Networks) in your region. The script is responsible for running the test and gathering measurement data. NetMet uses [Chrome Developer APIs](https://developer.chrome.com/docs/extensions/reference/api) for this purpose. The web browsing metrics are captured using browser's Performance API, specifically [Resource Timing](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing). After measuring web browsing statistics, an integrated [M-Lab speed test](https://speed.measurementlab.net/#/) is executed to measure uplink and downlink performance. At the end of the measurement, the results are displayed on the popup window and the same result data is transmitted to securely hosted servers.
+1. Install the extension
+2. Popup window displayed periodically (periodic time can be custom set from settings inside the extension)
+3. Test execution starts automatically on popup display
+4. On test start, user IP, ISP and City details are retrieved using public REST APIs from ip-api.com
+5. A new minimised browser window opens up for fetching top 20 websites in your region
+6. For every website, a background script extracts performance metrics using the browser APIs
+7. After fetching the 20 websites, the browser window is closed automatically
+8. The web browsing measurement metrics are displayed to the user as graph visualizations on the popup window
+9. The IP, ISP and City details & web browsing performance metrics are compiled into a JSON file and sent to our object storage server hosted in TUM campus network
+10. A M-lab speed test for downlink and uplink are executed
+11. Simultaneously, the speed test download speed and upload speed metrics are displayed at real-time to the user on the popup window
+12. At the end of the speed test the packet loss and latency details are also displayed to the user
+13. Performance metrics are retrieved using M-lab's API for the uplink and downlink speed test during execution
+14. The speed test performance metrics are compiled into a JSON file and sent to our object storage server hosted in TUM campus network
+15. The extension waits till the next periodic popup event, and continues from step 3
+    
+Frequent measurements help us to assess the quality of your connection and various bottlenecks affecting it. 
+NetMet uses [Chrome Developer APIs](https://developer.chrome.com/docs/extensions/reference/api) for running the test and gathering measurement data as mentioned above. The web browsing metrics are captured using browser's Performance API, specifically [Resource Timing](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing). The speed test integrated into the extension to measure uplink and downlink performance is the [M-Lab speed test](https://speed.measurementlab.net/#/). 
 
 ## Data Collection
 We hope that our data collection helps us to understand the Internet better. We are an academic institution and will try to publish all our findings to a wider audience. However, **we will never publish parts of our dataset which clearly identifies you or your company.**
