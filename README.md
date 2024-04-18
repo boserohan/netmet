@@ -5,24 +5,35 @@
 <br/><br/><br/><br/>
 
 
-# NetMet: Meet your network performance
+# `NetMet`: Meet your network performance
 
-NetMet is a chrome extension/plugin capable of deciphering your network performance. This plugin can be installed in any of your chromium based browsers (Google Chrome, Opera, Brave, Edge, etc.). It can observe various web browsing metrics based on the CDN server locations you are connecting to for some of the top websites in your region. Measuring internet speeds has never been easier, with M-Lab speed test already integrated into the plugin. With just one click of a button a 1-minute test gives you all these details which helps to troubleshoot any network issues you're facing. A feature to view past historical measurement data based on which networks you carried out measurements in, is also available, to get a quick overview.
+`NetMet` is a chrome extension/plugin capable of deciphering your network performance. This plugin can be installed in any of your chromium based browsers (Google Chrome, Opera, Brave, Edge, etc.). It can observe various web browsing metrics based on the CDN server locations you are connecting to for some of the top websites in your region. Measuring internet speeds has never been easier, with M-Lab speed test already integrated into the plugin. With just one click of a button a 1-minute test gives you all these details which helps to troubleshoot any network issues you're facing. A feature to view past historical measurement data based on which networks you carried out measurements in, is also available, to get a quick overview.
 
 ## What does the tool measure? 
 
 NetMet measures your overall network performance by using the following test suites.
     
-- End-to-end goodput, latency and bufferbloat (powered by [Google Speedtest](https://speed.measurementlab.net/#/))
-- Web browsing performance by connecting to landing websites hosted by popular CDN providers.
+1. End-to-end goodput, latency and bufferbloat (powered by [Google Speedtest](https://speed.measurementlab.net/#/))
+  
+  <img align="center" width="1000" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/bandwidth.png">
+  
+2. Web browsing performance by connecting to landing websites hosted by popular CDN providers.
+
+  <img align="center" width="1000" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/browsing.png">
+
+Based on all collected measurements from your network, `NetMet` will calculate a score for suitability of various applications.
+
+<img style="text-align:center;" width="300" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/score.png">
+
+> **NOTE**: `NetMet` automatically distinguishes between measurements from different networks you connected. There is no need to categorize manually!
 
 ## Install 
 
 Chrome Extension: [Get NetMet from Chrome Web Store](https://chromewebstore.google.com/detail/netmet-meet-your-network/oaljpapbocgcgdmpbigllilolfgebhnl)
 
-## How the test works?
+## How does the test work?
 
-1. Install the extension
+1. Install the extension 👆
 2. Popup window displayed periodically (periodic time can be custom set from settings inside the extension)
 3. Test execution starts automatically on popup display
 4. On test start, user IP, ISP and City details are retrieved using public REST APIs from ip-api.com
