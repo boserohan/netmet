@@ -314,7 +314,10 @@ function setPopupPeriodically() {
 chrome.runtime.onInstalled.addListener(function() {
   setPopupPeriodically();
   // Create an alarm to set the popup periodically
-  setAlarm(popupFrequency)
+  chrome.storage.local.get(['alarmFrequency'], function(result) {
+    var popupAlarmFrequency = result.alarmFrequency || popupFrequency;
+    setAlarm(popupAlarmFrequency)
+  })
   console.log("Periodic Alarm Set")
 });
 

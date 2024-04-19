@@ -17,10 +17,10 @@
   justify-content: center;
   background-color: var(--dl-color-primary-500);
 }
-.popup-text {
-  top: 35px;
-  left: 26px;
-  color: var(--dl-color-gray-white);
+.netmet-logo {
+  top: 8px;
+  left: 115px;
+  /* color: var(--dl-color-gray-white); */
   position: absolute;
 }
 .popup-container2 {
@@ -64,6 +64,20 @@
   box-shadow: 5px 5px 10px 0px #080808;
   background-color: var(--dl-color-success-500);
 }
+
+.popup-register3 {
+  color: var(--dl-color-primary-500);
+  text-align: right;
+  transition: 0.3s;
+  border-style: ridge;
+  border-width: 0px;
+  background-color: #ffffff;
+}
+.popup-register3:hover {
+  box-shadow: 5px 5px 10px 0px #080808;
+  background-color: var(--dl-color-success-500);
+}
+
 @media(max-width: 991px) {
   .popup-container1 {
     position: relative;
@@ -196,7 +210,7 @@
     color: var(--dl-color-success-500);
   }
   .popup-register {
-    left: 180px;
+    left: 165px;
     color: var(--dl-color-gray-white);
     bottom: 0px;
     margin: auto;
@@ -207,7 +221,7 @@
     background-color: var(--dl-color-primary-500);
   }
   .popup-register1 {
-    left: 50px;
+    left: 35px;
     color: var(--dl-color-gray-white);
     bottom: 0px;
     margin: auto;
@@ -217,6 +231,18 @@
     border-color: var(--dl-color-gray-black);
     background-color: var(--dl-color-primary-500);
   }
+  .popup-register3 {
+    left: 110px;
+    color: var(--dl-color-gray-white);
+    bottom: 0px;
+    margin: auto;
+    position: absolute;
+    font-style: normal;
+    font-weight: 600;
+    border-color: var(--dl-color-gray-black);
+    background-color: var(--dl-color-primary-500);
+  }
+
 }
 
 
