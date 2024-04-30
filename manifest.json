@@ -3,7 +3,7 @@
   "name": "NetMet: Meet your network performance",
   "description": "Evaluate web browsing and other network performance metrics with this web measurement tool.",
   "homepage_url": "https://github.com/boserohan91/netmet",
-  "version": "1.3",
+  "version": "1.4",
   "permissions": [
     "webRequest",
     "storage",
