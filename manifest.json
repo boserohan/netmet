@@ -3,7 +3,7 @@
   "name": "NetMet: Meet your network performance",
   "description": "Evaluate web browsing and other network performance metrics with this web measurement tool.",
   "homepage_url": "https://github.com/boserohan91/netmet",
-  "version": "1.4",
+  "version": "2.0",
   "permissions": [
     "webRequest",
     "storage",
@@ -67,7 +67,13 @@
     "https://surfshark.com/",
     "https://www.geeksforgeeks.org/",
     "https://www.warnerbros.com/",
-    "https://brave.com/"
+    "https://brave.com/",
+    "https://www.regjeringen.no/",
+    "https://www.skatteetaten.no/",
+    "https://www.prisjakt.no/",
+    "https://www.vinmonopolet.no/",
+    "https://www.tek.no/",
+    "https://www.xxl.no/"
   ],
   "background": {
     "service_worker": "background.js"
@@ -128,7 +134,13 @@
         "https://surfshark.com/*",
         "https://www.geeksforgeeks.org/*",
         "https://www.warnerbros.com/*",
-        "https://brave.com/*"
+        "https://brave.com/*",
+        "https://www.regjeringen.no/*",
+        "https://www.skatteetaten.no/*",
+        "https://www.prisjakt.no/*",
+        "https://www.vinmonopolet.no/*",
+        "https://www.tek.no/*",
+        "https://www.xxl.no/*"
       ],
       "js": ["fetch_performancedata.js"],
       "run_at": "document_start"

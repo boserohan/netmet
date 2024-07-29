@@ -1,5 +1,8 @@
+// const { title } = require("process")
+
 var performanceDict = new Object()
 var speedTestResult = new Object()
+var videoStreamingDASHMetrics = new Object()
 var ipDetails = new Object()
 let chartUpload = null
 let chartDownload = null
@@ -7,6 +10,8 @@ let chartCurrentWebVal = null
 
 var webBrowsingValues = new Object()
 var webBrowsingHistValues = new Object()
+
+
 
 var latency = 0
 var packet_loss = 0
@@ -18,6 +23,11 @@ var ttfbArr = [];
 var connectTimeArr = [];
 var dnsLookupTimeArr = [];
 var tlsNegotiationTimeArr = [];
+var bufferLevelArr = []
+var bitrateArr = []
+var framerateArr = []
+var resolutionHeightArr = []
+var droppedFramesArr = []
 
 var webBrowsingText = document.getElementById('webBrowsingText')
 var videoStreamingText = document.getElementById('videoStreamingText')
@@ -27,6 +37,10 @@ var bwStatsContainer = document.getElementById('bwStatsContainer')
 var testStatusText = document.getElementById('testStatusText')
 var testProgressHeader = document.getElementById('inProgressHeader')
 var homeBtnGroup = Array.from(document.getElementsByClassName('home-btn-group'))
+var webDropdownContainer = document.getElementById("webCurrentDropdownContainer")
+var bwCurrentDropdownContainer = document.getElementById("bwCurrentDropdownContainer")
+var dashDropdownContainer = document.getElementById("dashDropdownContainer")
+const dropdownContainers = document.querySelectorAll('.dropdown-container');
 var manifest = chrome.runtime.getManifest();
 var appVersion = manifest.version;
 document.getElementById('appVerNum').textContent = appVersion
@@ -34,7 +48,7 @@ document.getElementById('appVerNum').textContent = appVersion
 var lastTestDate;
 
 var windowCloseTimeLeft = 60;
-var timerCloseInterval;
+var timerCloseInterval = null;
 
 var qualityStandard = {
   1 : {
@@ -93,6 +107,12 @@ const urlListEU = [
   "https://www.thesun.co.uk/",
   "https://www.t-online.de/",
   "https://www.repubblica.it/",
+  "https://www.regjeringen.no/no/id4/",
+  "https://www.skatteetaten.no/person/",
+  "https://www.prisjakt.no/",
+  "https://www.vinmonopolet.no/",
+  "https://www.tek.no/",
+  "https://www.xxl.no/"
 ];
 
 const urlListAS = [
@@ -164,6 +184,7 @@ chrome.runtime.onMessage.addListener(
         performanceDict[requestUrl]['ip'] = request.ip
         performanceDict[requestUrl]['statusCode'] = request.statusCode
         performanceDict[requestUrl]['status'] = request.status
+        performanceDict[requestUrl]['fromCache'] = request.fromCache
         if (request.x_amz_cf_pop) {
           performanceDict[requestUrl]['x_amz_cf_pop'] = request.x_amz_cf_pop
           performanceDict[requestUrl]['serverLoc'] = request.x_amz_cf_pop.substring(0,3)
@@ -189,11 +210,22 @@ chrome.runtime.onMessage.addListener(
       if (!(currentUrl in performanceDict)) {
         performanceDict[currentUrl] = {}
       }
-      performanceDict[currentUrl]['ttfb'] = request.ttfb
-      performanceDict[currentUrl]['latency'] = request.latency
-      performanceDict[currentUrl]['dnsLookupTime'] = request.dnsLookupTime
-      performanceDict[currentUrl]['tcpConnectTime'] = request.tcpConnectTime
-      performanceDict[currentUrl]['tlsNegotiationTime'] = request.tlsNegotiationTime
+      // performanceDict[currentUrl]['ttfb'] = request.ttfb
+      // performanceDict[currentUrl]['latency'] = request.latency
+      // performanceDict[currentUrl]['dnsLookupTime'] = request.dnsLookupTime
+      // performanceDict[currentUrl]['tcpConnectTime'] = request.tcpConnectTime
+      // performanceDict[currentUrl]['tlsNegotiationTime'] = request.tlsNegotiationTime
+      // performanceDict[currentUrl]['firstContentfulPaint'] = request.firstContentfulPaint
+      // performanceDict[currentUrl]['firstPaint'] = request.firstPaint
+      // performanceDict[currentUrl]['pageLoadTime'] = request.pageLoadTime
+
+      Object.entries(request).forEach(([key, value]) => {
+        if (!key.includes('performance')) {
+          performanceDict[currentUrl][key] = value
+        }
+        // console.log(`Key: ${key}, Value: ${value}`)
+      })
+
       var cache_status_hit = false
       if (performanceDict[currentUrl].hasOwnProperty('x_cache')) {
         cache_status_hit = performanceDict[currentUrl]['x_cache'].toLowerCase().includes('hit')
@@ -210,10 +242,22 @@ chrome.runtime.onMessage.addListener(
               dnsLookupTimeArr: []
             }
         }
-        webBrowsingValues[server_loc].ttfbArr.push(request.ttfb)
-        webBrowsingValues[server_loc].connectTimeArr.push(request.tcpConnectTime)
-        webBrowsingValues[server_loc].tlsNegotiationTimeArr.push(request.tlsNegotiationTime)
-        webBrowsingValues[server_loc].dnsLookupTimeArr.push(request.dnsLookupTime)
+        if (request.ttfb) {
+          webBrowsingValues[server_loc].ttfbArr.push(request.ttfb)
+        }
+        if (request.tcpConnectTime) {
+          webBrowsingValues[server_loc].connectTimeArr.push(request.tcpConnectTime)
+        }
+        if (request.tlsNegotiationTime) {
+          webBrowsingValues[server_loc].tlsNegotiationTimeArr.push(request.tlsNegotiationTime)
+        }
+        if (request.dnsLookupTime) {
+          webBrowsingValues[server_loc].dnsLookupTimeArr.push(request.dnsLookupTime)
+        }
+        
+        // webBrowsingValues[server_loc].connectTimeArr.push(request.tcpConnectTime)
+        // webBrowsingValues[server_loc].tlsNegotiationTimeArr.push(request.tlsNegotiationTime)
+        // webBrowsingValues[server_loc].dnsLookupTimeArr.push(request.dnsLookupTime)
         
       }
     } 
@@ -239,6 +283,53 @@ chrome.runtime.onMessage.addListener(
   }
 );
 
+function showWindowCloseTimer() {
+  toggleWebDropdown()
+  toggleBWDropdown()
+  toggleDASHDropdown()
+  windowCloseTimeLeft = 60
+  document.getElementById("timerLabel").textContent = windowCloseTimeLeft
+  document.getElementById("timerDiv").style.display = 'block'
+  timerCloseInterval = setInterval(windowCloseTimer, 1000)
+  document.getElementById("stopTimerLink").addEventListener('click', function(event) {
+    event.preventDefault();
+    clearInterval(timerCloseInterval);
+    document.getElementById("timerDiv").style.display = 'none'
+  });
+}
+
+function saveVoDDASHstats() {
+  var timestampInMilliseconds = new Date().getTime();
+  var timestampString = timestampInMilliseconds.toString();
+
+  chrome.storage.local.get(['videoPlaybackDASH'], function(result) {
+    var vodDict = videoStreamingDASHMetrics
+    vodDict['timestamp'] = timestampInMilliseconds
+    vodDict['buffer_level'] = bufferLevelArr
+    vodDict['frame_rate'] = framerateArr
+    vodDict['bitrate'] = bitrateArr
+    vodDict['resolution_height'] = resolutionHeightArr
+
+    var timeElapsed = result.videoPlaybackDASH || null;
+    vodDict['videoPlaybackTimeStart'] = timeElapsed
+
+    var filename = getMeasurementId() + "_VoD_DASH_" + timestampString + "_" + ipDetails['ISP_AS'] + ".json"
+    var params = {
+        Body: JSON.stringify(vodDict), 
+        Bucket: "measurements", 
+        Key: filename, 
+    }
+    console.log("Saving VoD streaming (DASH) stats to object storage")
+    s3.putObject(params, function(err, data) {
+        if (err) console.log(err, err.stack) // an error occurred
+        else     console.log(data)           // successful response
+    })
+  });
+  
+  showWindowCloseTimer()
+  showResults()
+}
+
 function saveBandwidthStats() {
   var timestampInMilliseconds = new Date().getTime();
   var timestampString = timestampInMilliseconds.toString();
@@ -259,15 +350,15 @@ function saveBandwidthStats() {
       else     console.log(data)           // successful response
   })
 
-  windowCloseTimeLeft = 60
-  document.getElementById("timerLabel").textContent = windowCloseTimeLeft
-  document.getElementById("timerDiv").style.display = 'block'
-  timerCloseInterval = setInterval(windowCloseTimer, 1000)
-  document.getElementById("stopTimerLink").addEventListener('click', function(event) {
-    event.preventDefault();
-    clearInterval(timerCloseInterval);
-    document.getElementById("timerDiv").style.display = 'none'
-  });
+  // windowCloseTimeLeft = 60
+  // document.getElementById("timerLabel").textContent = windowCloseTimeLeft
+  // document.getElementById("timerDiv").style.display = 'block'
+  // timerCloseInterval = setInterval(windowCloseTimer, 1000)
+  // document.getElementById("stopTimerLink").addEventListener('click', function(event) {
+  //   event.preventDefault();
+  //   clearInterval(timerCloseInterval);
+  //   document.getElementById("timerDiv").style.display = 'none'
+  // });
 }
 
 function saveBrowsingStats() {
@@ -340,7 +431,9 @@ async function getIPGeolocationData() {
 }
 function runNdt7SpeedTest(){
   chartCurrentASNBWValues()
-  bwStatsContainer.style.display = 'block'
+  // bwStatsContainer.style.display = 'block'
+  toggleWebDropdown()
+  toggleBWDropdown()
   ndt7.test(
     {
         userAcceptedDataPolicy: true,
@@ -425,15 +518,15 @@ Mean server throughput: ${throughput} Mbps`);
   ).then((exitcode) => {
     console.log("ndt7 test completed with exit code:", exitcode)
     // document.getElementById('testInProgressText').style.display = 'none';
-    showResults()
     saveBandwidthStats()
     chrome.runtime.sendMessage({speedTestCompleted: 1})
+    examineDashPerformance()
   });
 }
 
 function openTabsRecursively(newWindowId, urls, index) {
   if (index < urls.length) {
-    chrome.tabs.create({ url: urls[index], active: false, windowId: newWindowId }, function(tab) {
+    chrome.tabs.create({ url: urls[index], active: true, windowId: newWindowId }, function(tab) {
 
       console.log(`Creating tab for:  ${urls[index]}`)
 
@@ -456,6 +549,7 @@ function openTabsRecursively(newWindowId, urls, index) {
     saveBrowsingStats()
     chrome.windows.remove(newWindowId);
     document.getElementById('currentMeasurementContainer').style.display = 'block'
+    toggleWebDropdown()
     chartCurrentASNWebValues()
     runNdt7SpeedTest()
   }
@@ -466,7 +560,7 @@ function openTabs(allUrls) {
   chrome.windows.create({
     type: 'normal',
     focused: false,
-    state: 'minimized'
+    state: 'minimized',
   }, function(newWindow) {
     // Access the ID of the new window
     openTabsRecursively(newWindow.id, allUrls, 0);
@@ -506,14 +600,26 @@ function computeQuality() {
 
   console.log(`BW latency: ${latency}`)
 
-  if (meanClientDownBW > 25) {
-    qualityMetrics["video_streaming"] = 1
-  } else if (meanClientDownBW > 5 && meanClientDownBW <= 25) {
-    qualityMetrics["video_streaming"] = 2
-  } else {
-    qualityMetrics["video_streaming"] = 3
+  // if (meanClientDownBW > 25) {
+  //   qualityMetrics["video_streaming"] = 1
+  // } else if (meanClientDownBW > 5 && meanClientDownBW <= 25) {
+  //   qualityMetrics["video_streaming"] = 2
+  // } else {
+  //   qualityMetrics["video_streaming"] = 3
+  // }
+  console.log(`Dropped Frames arr length: ${droppedFramesArr.length}`)
+  if (droppedFramesArr.length) {
+    var numDroppedFrames = droppedFramesArr[droppedFramesArr.length - 1]
+    var totalFrames = 30 * 30
+
+    if ((numDroppedFrames/totalFrames) < 0.05) {
+      qualityMetrics["video_streaming"] = 1
+    } else if ((numDroppedFrames/totalFrames) > 0.05 && (numDroppedFrames/totalFrames) < 0.10) {
+      qualityMetrics["video_streaming"] = 2
+    } else {
+      qualityMetrics["video_streaming"] = 3
+    }
   }
- 
 
   tele_bw = Math.min(meanClientDownBW,meanClientUpBW)
 
@@ -691,11 +797,15 @@ function addItemToDropdown(listId, itemName) {
 }
 
 function clickASNItemHandler() {
+
+  if (timerCloseInterval != null) {
+    clearInterval(timerCloseInterval)
+  }
   document.getElementById("displayHeader").textContent = "Historical Overview"
   document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'block'
   document.getElementById("ispText").textContent = this.textContent
-  bwStatsContainer.style.display = 'none'
+  // bwStatsContainer.style.display = 'none'
   document.getElementById('packetLossText').textContent = ""
   document.getElementById('latencyText').textContent = ""
   document.getElementById('infoHeader').style.display = 'none'
@@ -906,150 +1016,292 @@ function chartASNHistValues(asn) {
 
 function chartCurrentASNBWValues() {
 
-  const gaugeOptions = {
-    chart: {
-        type: 'solidgauge'
-    },
+//   const gaugeOptions = {
+//     chart: {
+//         type: 'solidgauge'
+//     },
 
-    title: null,
+//     title: null,
 
-    pane: {
-        center: ['50%', '85%'],
-        size: '100%',
-        startAngle: -90,
-        endAngle: 90,
-        background: {
-            backgroundColor:
-                Highcharts.defaultOptions.legend.backgroundColor || '#EEE',
-            innerRadius: '60%',
-            outerRadius: '100%',
-            shape: 'arc'
-        }
-    },
+//     pane: {
+//         center: ['50%', '85%'],
+//         size: '100%',
+//         startAngle: -90,
+//         endAngle: 90,
+//         background: {
+//             backgroundColor:
+//                 Highcharts.defaultOptions.legend.backgroundColor || '#EEE',
+//             innerRadius: '60%',
+//             outerRadius: '100%',
+//             shape: 'arc'
+//         }
+//     },
 
-    exporting: {
-        enabled: false
-    },
+//     exporting: {
+//         enabled: false
+//     },
 
-    tooltip: {
-        enabled: false
-    },
+//     tooltip: {
+//         enabled: false
+//     },
 
-    // the value axis
-    yAxis: {
-        stops: [
-            [0.1, '#DF5353'], // red 
-            [0.3, '#DDDF0D'], // yellow
-            [0.7, '#55BF3B'] // green
-        ],
-        lineWidth: 0,
-        tickWidth: 0,
-        minorTickInterval: null,
-        tickAmount: 2,
-        title: {
-            y: -70
-        },
-        labels: {
-            y: 16
-        }
-    },
+//     // the value axis
+//     yAxis: {
+//         stops: [
+//             [0.1, '#DF5353'], // red 
+//             [0.3, '#DDDF0D'], // yellow
+//             [0.7, '#55BF3B'] // green
+//         ],
+//         lineWidth: 0,
+//         tickWidth: 0,
+//         minorTickInterval: null,
+//         tickAmount: 2,
+//         title: {
+//             y: -70
+//         },
+//         labels: {
+//             y: 16
+//         }
+//     },
 
-    plotOptions: {
-        solidgauge: {
-            dataLabels: {
-                y: 5,
-                borderWidth: 0,
-                useHTML: true
-            }
-        }
-    }
-};
+//     plotOptions: {
+//         solidgauge: {
+//             dataLabels: {
+//                 y: 5,
+//                 borderWidth: 0,
+//                 useHTML: true
+//             }
+//         }
+//     }
+// };
 
-// The download gauge
-chartDownload = Highcharts.chart('downBWCurrentContainer', Highcharts.merge(gaugeOptions, {
-  title: {
-    text: null,
-    align: 'left'
-    },
-  //   subtitle: {
-  //       text: 'Download and Upload',
-  //       align: 'left'
-  //   },
-  accessibility: {
-    enabled: false
+// The download guage
+chartDownload = Highcharts.chart('downBWCurrentContainer', {
+
+  chart: {
+      type: 'gauge',
+      plotBackgroundColor: null,
+      plotBackgroundImage: null,
+      plotBorderWidth: 0,
+      plotShadow: false,
+      height: '105%',
   },
-    yAxis: {
-        min: 0,
-        max: 500,
-        title: {
-            text: 'Download Speed'
-        }
-    },
 
-    credits: {
-        enabled: false
-    },
+  title: {
+      text: 'Download'
+  },
 
-    series: [{
-        name: 'Download Speed',
-        data: [0],
-        dataLabels: {
-            format:
-                '<div style="text-align:center">' +
-                '<span style="font-size:15px">{y:.1f}</span><br/>' +
-                '<span style="font-size:8px;opacity:0.4">Mbps</span>' +
-                '</div>'
-        },
-        tooltip: {
-            valueSuffix: ' Mbps'
-        }
-    }]
+  pane: {
+      startAngle: -90,
+      endAngle: 240,
+      background: null,
+      center: ['50%', '55%'],
+      size: '80%'
+  },
 
-}));
+  // the value axis
+  yAxis: {
+      min: 0,
+      max: 1000,
+      tickPixelInterval: 72,
+      tickPosition: 'inside',
+      tickColor: Highcharts.defaultOptions.chart.backgroundColor || '#FFFFFF',
+      tickLength: 20,
+      tickWidth: 2,
+      minorTickInterval: null,
+      labels: {
+          distance: 20,
+          style: {
+              fontSize: '14px'
+          }
+      },
+      lineWidth: 0,
+      plotBands: [{
+          from: 0,
+          to: 25,
+          color: '#DF5353', // red  
+          thickness: 20,
+          borderRadius: '50%'
+      }, {
+        from: 25,
+        to: 50,
+        color: '#ffA500', // orange
+        thickness: 20,
+        borderRadius: '50%'
+      },{
+        from: 50,
+        to: 100,
+        color: '#DDDF0D', // yellow
+        thickness: 20,
+        borderRadius: '50%'
+      }, {
+          from: 100,
+          to: 600,
+          color: '#55BF3B', // green
+          thickness: 20,
+          borderRadius: '50%'
+      }, {
+          from: 600,
+          to: 1000,
+          color: '#006400', // dark green
+          thickness: 20
+      }]
+  },
+
+  series: [{
+      name: 'Speed',
+      data: [0],
+      tooltip: {
+          valueSuffix: ' Mbps'
+      },
+      dataLabels: {
+          format: '{y} Mb/s',
+          borderWidth: 0,
+          color: (
+              Highcharts.defaultOptions.title &&
+              Highcharts.defaultOptions.title.style &&
+              Highcharts.defaultOptions.title.style.color
+          ) || '#333333',
+          style: {
+              fontSize: '16px'
+          }
+      },
+      dial: {
+          radius: '80%',
+          backgroundColor: 'gray',
+          baseWidth: 12,
+          baseLength: '0%',
+          rearLength: '0%'
+      },
+      pivot: {
+          backgroundColor: 'gray',
+          radius: 6
+      }
+
+  }]
+
+});
 
 // The upload gauge
-chartUpload = Highcharts.chart('upBWCurrentContainer', Highcharts.merge(gaugeOptions, {
-  accessibility: {
-    enabled: false
-  },  
-  yAxis: {
-        min: 0,
-        max: 500,
-        title: {
-            text: 'Upload Speed'
-        }
-    },
-    credits: {
-      enabled: false
-    },
-    series: [{
-        name: 'Upload Speed',
-        data: [0],
-        dataLabels: {
-            format:
-                '<div style="text-align:center">' +
-                '<span style="font-size:15px">{y:.1f}</span><br/>' +
-                '<span style="font-size:8px;opacity:0.4">' +
-                'Mbps' +
-                '</span>' +
-                '</div>'
-        },
-        tooltip: {
-            valueSuffix: ' Mbps'
-        }
-    }]
+chartUpload = Highcharts.chart('upBWCurrentContainer', {
 
-}));
+  chart: {
+      type: 'gauge',
+      plotBackgroundColor: null,
+      plotBackgroundImage: null,
+      plotBorderWidth: 0,
+      plotShadow: false,
+      height: '105%',
+  },
+
+  title: {
+      text: 'Upload'
+  },
+
+  pane: {
+      startAngle: -90,
+      endAngle: 240,
+      background: null,
+      center: ['50%', '55%'],
+      size: '80%'
+  },
+
+  // the value axis
+  yAxis: {
+      min: 0,
+      max: 800,
+      tickPixelInterval: 72,
+      tickPosition: 'inside',
+      tickColor: Highcharts.defaultOptions.chart.backgroundColor || '#FFFFFF',
+      tickLength: 20,
+      tickWidth: 2,
+      minorTickInterval: null,
+      labels: {
+          distance: 20,
+          style: {
+              fontSize: '14px'
+          }
+      },
+      lineWidth: 0,
+      plotBands: [{
+          from: 0,
+          to: 10,
+          color: '#DF5353', // red  
+          thickness: 20,
+          borderRadius: '50%'
+      }, {
+        from: 10,
+        to: 35,
+        color: '#ffA500', // orange
+        thickness: 20,
+        borderRadius: '50%'
+      }, {
+        from: 35,
+        to: 70,
+        color: '#DDDF0D', // yellow
+        thickness: 20,
+        borderRadius: '50%'
+      }, {
+          from: 70,
+          to: 500,
+          color: '#55BF3B', // green
+          thickness: 20,
+          borderRadius: '50%'
+      }, {
+          from: 500,
+          to: 800,
+          color: '#006400', // dark green
+          thickness: 20
+      }]
+  },
+
+  series: [{
+      name: 'Speed',
+      data: [0],
+      tooltip: {
+          valueSuffix: ' Mbps'
+      },
+      dataLabels: {
+          format: '{y} Mb/s',
+          borderWidth: 0,
+          color: (
+              Highcharts.defaultOptions.title &&
+              Highcharts.defaultOptions.title.style &&
+              Highcharts.defaultOptions.title.style.color
+          ) || '#333333',
+          style: {
+              fontSize: '16px'
+          }
+      },
+      dial: {
+          radius: '80%',
+          backgroundColor: 'gray',
+          baseWidth: 12,
+          baseLength: '0%',
+          rearLength: '0%'
+      },
+      pivot: {
+          backgroundColor: 'gray',
+          radius: 6
+      }
+
+  }]
+
+});
+
 }
 
 
 
 function chartCurrentASNWebValues() {
+  console.log('Plotting current web browsing metrics!')
   const avgTtfbArr = []
   const avgConnectTimeArr = []
   const avgDnsLookupTimeArr = []
   const avgtlsNegotiationTimeArr = []
   const serverLocationsArr = []
+
+  console.log(`webBrowsingValues: ${JSON.stringify(webBrowsingValues)}`)
 
   for (const [key, value] of Object.entries(webBrowsingValues)) {
     serverLocationsArr.push(key)
@@ -1073,7 +1325,6 @@ function chartCurrentASNWebValues() {
     webBrowsingHistValues[key]['avgTlsNegotiationTime'] = avgtlsNegotiationTimeArr.slice(-1)
 
   }
-
 
   chartCurrentWebVal = Highcharts.chart('webCurrentContainer', {
     chart: {
@@ -1220,6 +1471,7 @@ function onPageLoad() {
   }
   else {
     testSteps()
+    // document.getElementById('currentMeasurementContainer').style.display = 'block'
     console.log("Started New Test")
   }
 }
@@ -1270,6 +1522,233 @@ settingsCloseBtn.addEventListener('click', function() {
   document.getElementById('settingsContainer').style.display = 'none';
 });
 
+function examineDashPerformance() {
+  document.getElementById('currentMeasurementContainer').style.display = 'block'
+  document.getElementById('videoPlayer').style.display = 'block'
+  toggleBWDropdown()
+  toggleDASHDropdown()
+  // document.getElementById("dashDropdownContainer").style.display = 'block'
+  var url = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
+  // var url = "https://customer-f33zs165nr7gyfy4.cloudflarestream.com/6b9e68b07dfee8cc2d116e4c51d6a957/manifest/video.mpd";
+  // var url = "https://customer-m033z5x00ks6nunl.cloudflarestream.com/ea95132c15732412d22c1476fa83f27a/manifest/video.mpd";
+  var player = dashjs.MediaPlayer().create();
+  
+  const videoRequestedTimestamp = Date.now();
+  player.initialize(document.querySelector("#videoPlayer"), url, true);
+
+  if (player.isReady()) 
+  
+
+  player.on(dashjs.MediaPlayer.events["PLAYBACK_ENDED"], function () {
+    // clearInterval(eventPoller);
+    clearInterval(extractDASHMetrics);
+    console.log('Playback ended')
+  });
+
+  player.on(dashjs.MediaPlayer.events["CAN_PLAY"], function () {
+    // clearInterval(eventPoller);
+    console.log('Video is now playable!')
+    var timeElapsed = Date.now() - videoRequestedTimestamp;
+    console.log(`Video is now playable after ${timeElapsed} ms!`);
+  });
+
+  player.on(dashjs.MediaPlayer.events["PLAYBACK_STARTED"], function () {
+    // clearInterval(eventPoller);
+    var timeElapsed = Date.now() - videoRequestedTimestamp;
+    console.log(`Video playback started after ${timeElapsed} ms!`)
+    chrome.storage.local.set({videoPlaybackDASH: timeElapsed})
+  });
+
+
+  video = document.querySelector("video");
+
+  var bufferChart = Highcharts.chart('bufferCurrentContainer', {
+      chart: {
+          type: 'line'
+      },
+      title: {
+          text: 'Buffer Level'
+      },
+
+      xAxis: {
+          title : {
+            text: 'Time (s)'
+          }
+      },
+      yAxis: {
+          title: {
+              text: 'Buffer Level (secs)'
+          }
+      },
+      plotOptions: {
+          line: {
+              enableMouseTracking: false
+          }
+      },
+      series: [{
+          name: 'Buffer Level',
+          data: [0,]
+      }]
+});
+
+var bitrateChart = Highcharts.chart('bitrateCurrentContainer', {
+  chart: {
+      type: 'line'
+  },
+  title: {
+      text: 'Bitrate'
+  },
+  xAxis: {
+      title : {
+        text: 'Time (s)'
+      }
+  },
+  yAxis: {
+      title: {
+          text: 'Bitrate (Kbps)'
+      }
+  },
+  plotOptions: {
+      line: {
+          enableMouseTracking: false
+      }
+  },
+  series: [{
+      name: 'Bitrate',
+      data: [0,]
+  }]
+});
+
+var resolutionChart = Highcharts.chart('resolutionCurrentContainer', {
+  chart: {
+      type: 'line'
+  },
+  title: {
+      text: 'Resolution'
+  },
+  xAxis: {
+      title : {
+        text: 'Time (s)'
+      }
+  },
+  yAxis: {
+      title: {
+          text: 'Resolution (height in px)'
+      }
+  },
+  plotOptions: {
+      line: {
+          enableMouseTracking: false
+      }
+  },
+  series: [{
+      name: 'Resolution',
+      data: [0,]
+  }]
+});
+
+var framerateChart = Highcharts.chart('framerateCurrentContainer', {
+  chart: {
+      type: 'line'
+  },
+  title: {
+      text: 'Framerate'
+  },
+  xAxis: {
+      title : {
+        text: 'Time (s)'
+      }
+  },
+  yAxis: {
+      title: {
+          text: 'FPS'
+      }
+  },
+  plotOptions: {
+      line: {
+          enableMouseTracking: false
+      }
+  },
+  series: [{
+      name: 'Framerate',
+      data: [0,]
+  }]
+});
+
+
+  timeInSeconds = 0
+  var lastDecodedByteCount = 0;
+
+
+
+  var extractDASHMetrics = setInterval(function () {
+    var activeStream = player.getActiveStream()
+
+    if (activeStream == null){
+      clearInterval(extractDASHMetrics)
+      console.error('ERROR: No active streams founds. Exiting!')
+      throw "DASH experiment failed!"
+    }
+
+    var streamInfo = activeStream.getStreamInfo();
+    var dashMetrics = player.getDashMetrics();
+    var dashAdapter = player.getDashAdapter();
+    if (dashMetrics) {
+        const periodIdx = streamInfo.index;
+        var repSwitch = dashMetrics.getCurrentRepresentationSwitch('video', true);
+        var bufferLevel = dashMetrics.getCurrentBufferLevel('video', true);
+        var currentFrameStats = dashMetrics.getCurrentDroppedFrames('video', true);
+        // var bitrate = repSwitch ? Math.round(dashAdapter.getBandwidthForRepresentation(repSwitch.to, periodIdx) / 1000) : NaN;
+        var adaptation = dashAdapter.getAdaptationForType(periodIdx, 'video', streamInfo);
+        var currentRep = adaptation.Representation_asArray.find(function (rep) {
+            return rep.id === repSwitch.to
+        })
+        var frameRate = currentRep.frameRate;
+        var resolution = currentRep.width + 'x' + currentRep.height;
+        // document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
+        // document.getElementById('framerate').innerText = frameRate + " fps";
+        // document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
+        // document.getElementById('resolution').innerText = resolution;
+        console.log(`BufferLevel=${bufferLevel} secs`)
+        console.log(`FrameRate=${frameRate} fps`)
+        console.log(`Resolution: ${resolution}`)
+        console.log(`Dropped Frames: ${currentFrameStats.droppedFrames}`)
+        // console.log(`Reported Bitrate=${bitrate} Kbps`)
+        // const x = timeInSeconds, // current time
+        calc_buffer = bufferLevel;
+        bufferChart.series[0].addPoint(calc_buffer);
+        resolutionChart.series[0].addPoint(currentRep.height)
+        framerateChart.series[0].addPoint(frameRate)
+
+        bufferLevelArr.push(calc_buffer)
+        resolutionHeightArr.push(currentRep.height)
+        framerateArr.push(frameRate)
+        droppedFramesArr.push(currentFrameStats.droppedFrames)
+    }
+    if (video.webkitVideoDecodedByteCount !== undefined) {
+      var calculatedBitrate = (((video.webkitVideoDecodedByteCount - lastDecodedByteCount) / 1000) * 8);
+      // document.getElementById('calculatedBitrate').innerText = Math.round(calculatedBitrate) + " Kbps";
+      console.log(`Calculated video Bitrate=${Math.round(calculatedBitrate)} Kbps`)
+      lastDecodedByteCount = video.webkitVideoDecodedByteCount;
+      calc_bitrate = Math.round(calculatedBitrate)
+      bitrateChart.series[0].addPoint(calc_bitrate)
+
+      bitrateArr.push(calculatedBitrate)
+    }
+    timeInSeconds += 1
+    if (timeInSeconds == 30) {
+      player.destroy();
+      clearInterval(extractDASHMetrics);
+      toggleDASHDropdown()
+      document.getElementById('videoPlayer').style.display = 'none'
+      saveVoDDASHstats()
+    }
+  }, 1000);
+
+}
+
+
+
 
 async function testSteps(){
   exBtn.disabled = true
@@ -1279,7 +1758,7 @@ async function testSteps(){
   document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'none'
   document.getElementById("ispText").textContent = 'N/A'
-  bwStatsContainer.style.display = 'none'
+  // bwStatsContainer.style.display = 'none'
   document.getElementById('packetLossText').textContent = ""
   document.getElementById('latencyText').textContent = ""
   webBrowsingText.textContent = '?'
@@ -1317,12 +1796,19 @@ async function testSteps(){
   );
   
   openTabs(allUrls)
+  document.getElementById('currentMeasurementContainer').style.display = 'block'
+  // runNdt7SpeedTest()
+  // examineDashPerformance()
  
   console.log("All steps run")
 }
 
 var exBtn = document.getElementById('startMeasurementBtn');
 exBtn.addEventListener('click', function() {
+  if (timerCloseInterval != null) {
+    clearInterval(timerCloseInterval)
+    document.getElementById("timerDiv").style.display = 'none'
+  }
   testSteps()
 });
 
@@ -1344,4 +1830,80 @@ window.onerror = function(message, source, lineno, colno, error) {
 
   console.error("An error occurred:", message, "at", source, "line", lineno, "column", colno);
 };
+
+// function activateDropdownContainer(container) {
+//   container.classList.add('active');
+// }
+
+// function disableDropdownContainer(container) {
+//   container.classList.remove('active');
+// }
+
+// dropdownContainers.forEach(container => {
+//   const header = container.querySelector('.dropdown-header');
+//   header.addEventListener('click', () => {
+//     if (!container.classList.contains('active')) {
+//       activateDropdownContainer(container);
+//     }
+//   });
+// });
+
+var webDropdownHeader = document.getElementById('webDropdownHeader')
+var bwDropdownHeader = document.getElementById('bwDropdownHeader')
+var dashDropdownHeader = document.getElementById('dashDropdownHeader')
+
+function toggleWebDropdown() {
+  var webContainer = document.getElementById('webCurrentContainer')
+  var dropdownBtn = document.getElementById('webDropdownBtn')
+  if (webContainer.style.display === "none") {
+    webContainer.style.display = "block";
+    dropdownBtn.src = "img/dropdown-up.png"
+    dropdownBtn.title = "Compress"
+  } else {
+    webContainer.style.display = "none";
+    dropdownBtn.src = "img/dropdown-down.png"
+    dropdownBtn.title = "Expand"
+  }
+}
+
+function toggleBWDropdown() {
+  var bwDropdownContainer = document.getElementById('bwDropdownContainer')
+  var dropdownBtn = document.getElementById('bwDropdownBtn')
+  if (bwDropdownContainer.style.display === "none") {
+    bwDropdownContainer.style.display = "block";
+    dropdownBtn.src = "img/dropdown-up.png"
+    dropdownBtn.title = "Compress"
+  } else {
+    bwDropdownContainer.style.display = "none";
+    dropdownBtn.src = "img/dropdown-down.png"
+    dropdownBtn.title = "Expand"
+  }
+}
+
+function toggleDASHDropdown() {
+  var dashDropdownContainer = document.getElementById('dashDropdownContainer')
+  var dropdownBtn = document.getElementById('dashDropdownBtn')
+  if (dashDropdownContainer.style.display === "none") {
+    dashDropdownContainer.style.display = "block";
+    dropdownBtn.src = "img/dropdown-up.png"
+    dropdownBtn.title = "Compress"
+  } else {
+    dashDropdownContainer.style.display = "none";
+    dropdownBtn.src = "img/dropdown-down.png"
+    dropdownBtn.title = "Expand"
+  }
+}
+
+webDropdownHeader.addEventListener('click', () => {
+  toggleWebDropdown()
+});
+
+bwDropdownHeader.addEventListener('click', () => {
+  toggleBWDropdown()
+});
+
+dashDropdownHeader.addEventListener('click', () => {
+  toggleDASHDropdown()
+});
+
 console.log("measure_stats.js loaded")

@@ -101,8 +101,8 @@
     </style>
   </head>
   <body>
-    <link rel="stylesheet" href="./style.css" />
-    <div>
+    <link rel="stylesheet" href="./index.css" />
+    <div class="popup-container">
       <link href="./popup.css" rel="stylesheet" />
 
       <div class="popup-container">
@@ -116,12 +116,8 @@
         <div class="popup-container2" id="settingsContainer" style="display: none;">
           <div class="settings-container">
             <div id="settingsCloseBtn" class="close-btn">&times;</div>
-            <h3>Settings</h3>
+            <h3 class="settings-header">Settings</h3>
             <ul>
-              <li>
-                <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
-                <input type="number" id="popupFrequency" min="15" max="300" style="height: 18px;">
-              </li>
               <li>
                 <label class="popup-text10">User Id:</label>
                 <label class="popup-text10" id="userIdNum">N/A</label>
@@ -134,9 +130,13 @@
                 <label class="popup-text10">Github:</label>
                 <label class="popup-text10">https://github.com/boserohan91/netmet</label>
               </li>
+              <li>
+                <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
+                <input type="number" id="popupFrequency" min="15" max="300" style="height: 15px;">
+              </li>
             </ul>
-            <span class="settings-feedback-text" style="display: none;" id="settingsSaveFeedback"></span>
             <button id="settingsSaveBtn" class="popup-register3 button">Save</button>
+            <span class="settings-feedback-text" style="display: none;" id="settingsSaveFeedback"></span>
           </div>
         </div>
         <div class="popup-container2" id="lastTestContainer">

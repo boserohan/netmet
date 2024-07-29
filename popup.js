@@ -44,8 +44,8 @@ startAdhocTestBtn.addEventListener('click', function() {
   chrome.windows.create({
     type: 'popup',
     url: 'index.html?action=startnewtest',
-    width: 600,
-    height: 700,
+    width: 700,
+    height: 1200,
     top: 100,
     left: 100
   });

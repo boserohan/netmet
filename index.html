@@ -102,9 +102,9 @@
   </head>
   <body>
 
-    <link rel="stylesheet" href="./style.css"/>
+    <link rel="stylesheet" href="./index.css"/>
     
-    <div>
+    <div class="main-container">
       <!-- <link href="./index.css" rel="stylesheet" /> -->
 
       <div class="home-container">
@@ -174,10 +174,6 @@
           <h3>Settings</h3>
           <ul>
             <li>
-              <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
-              <input type="number" id="popupFrequency" min="15" max="300" style="height: 18px;">
-            </li>
-            <li>
               <label class="popup-text10">User Id:</label>
               <label class="popup-text10" id="userIdNum">N/A</label>
             </li>
@@ -188,6 +184,10 @@
             <li>
               <label class="popup-text10">Github:</label>
               <label class="popup-text10">https://github.com/boserohan91/netmet</label>
+            </li>
+            <li>
+              <label class="popup-text10" for="text-field">Popup Frequency (mins):</label>
+              <input type="number" id="popupFrequency" min="15" max="300" style="height: 18px;">
             </li>
           </ul>
           <span class="settings-feedback-text" style="display: none;" id="settingsSaveFeedback"></span>
@@ -231,30 +231,71 @@
           </span>
         </div>
         <div id="currentMeasurementContainer" class="home-current-measurement-container" style="display: none;">
-          <div class="home-web-current-outer-container">
-            <h2 class="home-text15">Web Browsing</h2>
-            <div id="webCurrentContainer" class="home-web-current-container"></div>
+          <!-- Web Measurement -->
+          <div id="webCurrentDropdownContainer" class="home-web-current-outer-container dropdown-outer-container">
+            <div id="webDropdownHeader" class="dropdown-header">
+              <h2 class="home-text15">Web Browsing</h2>
+              <img id="webDropdownBtn" class="dropdown-btn" src="img/dropdown-down.png" width="20" height="20" title="Expand">
+            </div>
+            <div id="webCurrentContainer" class="home-web-current-container" style="display: none;"></div>
           </div>
-          <div class="home-bw-current-outer-container">
-            <h2 class="home-text16">Bandwidth</h2>
-            <p class="home-text18">(powered by M-Lab speed test)</p>
-            <div id="downBWCurrentContainer" class="home-down-bw-current-container"></div>
-            <div id="upBWCurrentContainer" class="home-down-bw-current-container"></div>
-
+          <!-- BW Measurement -->
+          <div id="bwCurrentDropdownContainer" class="home-bw-current-outer-container dropdown-outer-container">
+            <div id="bwDropdownHeader" class="dropdown-header">
+              <h2 class="home-text16">Bandwidth</h2>
+              <img id="bwDropdownBtn" class="dropdown-btn" src="img/dropdown-down.png" width="20" height="20" title="Expand">
+            </div>
+            <div id="bwDropdownContainer" style="display: none;">
+              <p class="home-text16">(powered by M-Lab speed test)</p>
+              <div id="gaugeBWContainer" class="gauge-bw-container">
+                <div id="downBWCurrentContainer" class="home-inner-bw-current-container"></div>
+                <div id="upBWCurrentContainer" class="home-inner-bw-current-container"></div>
+              </div>
+              <div id="bwStatsContainer" class="bw-stats-container">
+                <ul class="bw-ul list">
+                  <li class="list-item">
+                    <label class="home-text07">Packet Loss:</label>
+                    <label id="packetLossText" class="home-text08"></label>
+                  </li>
+                  <li class="list-item">
+                    <label class="home-text09">Latency:</label>
+                    <label id="latencyText" class="home-text10"></label>
+                  </li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <!-- DASH Measurement -->
+          <div id="dashOuterContainer" class="home-dash-current-outer-container dropdown-outer-container">
+            <div id="dashDropdownHeader" class="dropdown-header">
+              <h2 class="home-text15">Video Streaming (DASH)</h2>
+              <img id="dashDropdownBtn" class="dropdown-btn" src="img/dropdown-down.png" width="20" height="20" title="Expand">
+              <!-- <span class="arrow">▼</span> -->
+              
+            </div>
+            <!-- DASH Video Player -->
+            <div id="dashDropdownContainer" style="display: none;">
+              <div id="dashVideoContainer" class="dash-video-container">
+                <video id="videoPlayer" class="video-player" muted=""></video>
+              </div>
+              <div id="dashMeasurementContainer" class="dash-measurement-container">
+                <div class="home-buffer-current-outer-container">
+                  <div id="bufferCurrentContainer" class="home-buffer-current-container"></div>
+                </div>
+                <div class="home-bitrate-current-outer-container">
+                  <div id="bitrateCurrentContainer" class="home-bitrate-current-container"></div>
+                </div>
+                <div class="home-resolution-current-outer-container">
+                  <div id="resolutionCurrentContainer" class="home-resolution-current-container"></div>
+                </div>
+                <div class="home-framerate-current-outer-container">
+                  <div id="framerateCurrentContainer" class="home-resolution-current-container"></div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
-        <div id="bwStatsContainer" class="bw-stats-container" style="display: none;">
-          <ul class="bw-ul list">
-            <li class="list-item">
-              <label class="home-text07">Packet Loss:</label>
-              <label id="packetLossText" class="home-text08"></label>
-            </li>
-            <li class="list-item">
-              <label class="home-text09">Latency:</label>
-              <label id="latencyText" class="home-text10"></label>
-            </li>
-          </ul>
-        </div>
+        <!-- Historic Measurement Stats -->
         <div id="histMeasurementContainer" class="home-current-measurement-container" style="display: none;">
           <div class="home-web-current-outer-container">
             <h2 class="home-text17">Web Browsing</h2>
@@ -281,6 +322,7 @@
     <script src="aws-sdk-2.1529.0.min.js"></script>
     <script src="./ndt7/src/ndt7.min.js" type="text/javascript"></script>
     <script src="measure_stats.js"></script>
+    <script src="dash.all.min.js"></script>
     
   </body>
 </html>

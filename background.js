@@ -58,7 +58,13 @@ const url_list_regions = [
   "https://surfshark.com/",
   "https://www.geeksforgeeks.org/",
   "https://www.warnerbros.com/",
-  "https://brave.com/"
+  "https://brave.com/",
+  "https://www.regjeringen.no/no/id4/",
+  "https://www.skatteetaten.no/person/",
+  "https://www.prisjakt.no/",
+  "https://www.vinmonopolet.no/",
+  "https://www.tek.no/",
+  "https://www.xxl.no/"
 ];
 
 var url_list = url_list_common.concat(url_list_regions)
@@ -142,6 +148,7 @@ chrome.webRequest.onCompleted.addListener(
     startTimeMap[requestId].ip = details.ip;
     startTimeMap[requestId].status = "success";
     startTimeMap[requestId].statusCode = details.statusCode;
+    startTimeMap[requestId].fromCache = details.fromCache;
     console.log(`URL: ${startTimeData.requestUrl}`);
     console.log(`details : ${JSON.stringify(details)}`)
 
@@ -299,12 +306,12 @@ function setPopupPeriodically() {
   chrome.windows.create({
     type: 'popup',
     url: 'index.html',
-    width: 600,
-    height: 700,
+    width: 700,
+    height: 1200,
     // top: 100,
     // left: 100,
     top: 100,
-    left: 100
+    left: 100,
     // state: 'maximized'
   });
   console.log("setPopupPeriodically function")
