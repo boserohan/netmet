@@ -28,6 +28,10 @@ var bitrateArr = []
 var framerateArr = []
 var resolutionHeightArr = []
 var droppedFramesArr = []
+var qualityLevelArr = []
+var meanBitrate = 0 
+var dashPlaybackStart = 0
+var meanQualityLevel = 0
 
 var webBrowsingText = document.getElementById('webBrowsingText')
 var videoStreamingText = document.getElementById('videoStreamingText')
@@ -746,6 +750,9 @@ function showResults() {
     webBrowsingValues: webBrowsingHistValues,  
     downloadSpeed: parseFloat(meanClientDownBW),
     uploadSpeed: parseFloat(meanClientUpBW),
+    dashVoDPlaybackstart: parseFloat(dashPlaybackStart),
+    dashVoDBitrate: parseFloat(meanBitrate),
+    dashVoDQualityLevel: parseFloat(meanQualityLevel)
   };
   saveMeasurementHist(ipDetails['ISP_AS'], valuesToStore)
   lastTestDate = new Date().toLocaleString()
@@ -1010,6 +1017,252 @@ function chartASNHistValues(asn) {
           data: avgTtfbHistArr
       }]
     });
+
+
+    var dashVoDQualityLevelList = all_values[asn]['dashVoDQualityLevel'] || []
+    var dashVoDPlaybackstartList = all_values[asn]['dashVoDPlaybackstart'] || []
+    var dashVoDBitrateList = all_values[asn]['dashVoDBitrate'] || []
+
+    var monthlyStatsQL = {
+      1 : [], 2 : [], 3 : [], 4 : [], 5 : [], 6 : [], 7 : [], 8 : [] , 9 : [], 10 : [], 11 : [], 12 : []
+    }
+    var monthlyStatsPlayStart = {
+      1 : [], 2 : [], 3 : [], 4 : [], 5 : [], 6 : [], 7 : [], 8 : [] , 9 : [], 10 : [], 11 : [], 12 : []
+    }
+    var monthlyStatsBitrate = {
+      1 : [], 2 : [], 3 : [], 4 : [], 5 : [], 6 : [], 7 : [], 8 : [] , 9 : [], 10 : [], 11 : [], 12 : []
+    }
+
+
+    console.log('Printing DASH quality level stats!')
+
+
+    dashVoDQualityLevelList.forEach((item) => {
+      if (item[0] != null) {
+        var timestampDate = new Date(item[0])
+        var qualityLevelItem = item[1]
+        console.log(`Timestamp Date: ${timestampDate}`)
+        console.log(`DASH QL: ${timestampDate.getMonth() + 1} : ${qualityLevelItem}`)
+
+        var month = timestampDate.getMonth() + 1
+        monthlyStatsQL[month].push(qualityLevelItem)
+      }
+    })
+
+    dashVoDPlaybackstartList.forEach((item) => {
+      if (item[0] != null) {
+        var timestampDate = new Date(item[0])
+        var playbackstartItem = item[1]
+        console.log(`Timestamp Date: ${timestampDate}`)
+        console.log(`DASH PL Start: ${timestampDate.getMonth() + 1} : ${playbackstartItem}`)
+
+        var month = timestampDate.getMonth() + 1
+        monthlyStatsPlayStart[month].push(playbackstartItem)
+      }
+    })
+
+    dashVoDBitrateList.forEach((item) => {
+      if (item[0] != null) {
+        var timestampDate = new Date(item[0])
+        var bitrateItem = item[1]
+        console.log(`Timestamp Date: ${timestampDate}`)
+        console.log(`DASH Bitrate: ${timestampDate.getMonth() + 1} : ${bitrateItem}`)
+
+        var month = timestampDate.getMonth() + 1
+        monthlyStatsBitrate[month].push(bitrateItem)
+      }
+    })
+
+
+    console.log(`Monthly QL: ${JSON.stringify(monthlyStatsQL)}`)
+    console.log(`Monthly PlayStart: ${JSON.stringify(monthlyStatsPlayStart)}`)
+    console.log(`Monthly Bitrate: ${JSON.stringify(monthlyStatsBitrate)}`)
+    
+    var monthlyAvgQL = []
+    var monthlyAvgPlayStart = []
+    var monthlyAvgBitrate = []
+
+    for (let month = 0; month < 12; month++) {
+      var avgQL = parseFloat(((monthlyStatsQL[month+1].reduce((sum,qlItem) => sum+qlItem,0)) / monthlyStatsQL[month+1].length).toFixed(2))
+      var avgPlayStart = parseFloat(((monthlyStatsPlayStart[month+1].reduce((sum,playStartItem) => sum+playStartItem,0)) / monthlyStatsPlayStart[month+1].length).toFixed(2))
+      var avgBitrate = parseFloat(((monthlyStatsBitrate[month+1].reduce((sum,bitrateItem) => sum+bitrateItem,0)) / monthlyStatsBitrate[month+1].length).toFixed(2))
+
+      if (avgQL > 0) {
+        monthlyAvgQL.push(avgQL)
+      } else {
+        monthlyAvgQL.push(0)
+      }
+
+      if (avgPlayStart > 0) {
+        monthlyAvgPlayStart.push(avgPlayStart)
+      } else {
+        monthlyAvgPlayStart.push(0)
+      }
+
+      if (avgBitrate > 0) {
+        monthlyAvgBitrate.push(avgBitrate)
+      } else {
+        monthlyAvgBitrate.push(0)
+      }
+
+    }
+
+    console.log(`Avg QL: ${monthlyAvgQL}`)
+    console.log(`Avg PlayStart: ${monthlyAvgPlayStart}`)
+    console.log(`Avg Bitrate: ${monthlyAvgBitrate}`)
+
+    // VoD DASH stats
+    Highcharts.chart('containerDASHHist', {
+      chart: {
+          zooming: {
+              type: 'xy'
+          }
+      },
+      title: {
+          text: null,
+          align: 'left'
+      },
+      // subtitle: {
+      //     text: 'Source: WorldClimate.com',
+      //     align: 'left'
+      // },
+      xAxis: [{
+          categories: [
+              'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+              'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+          ],
+          crosshair: true
+      }],
+      yAxis: [{ // Primary yAxis
+          labels: {
+              format: '{value} Kbps',
+              style: {
+                  color: Highcharts.getOptions().colors[2]
+              }
+          },
+          title: {
+              text: 'Bitrate',
+              style: {
+                  color: Highcharts.getOptions().colors[2]
+              }
+          },
+          opposite: true
+  
+      }, { // Secondary yAxis
+          gridLineWidth: 0,
+          title: {
+              text: 'Playback Start',
+              style: {
+                  color: Highcharts.getOptions().colors[0]
+              }
+          },
+          labels: {
+              format: '{value} ms',
+              style: {
+                  color: Highcharts.getOptions().colors[0]
+              }
+          }
+  
+      }, { // Tertiary yAxis
+          gridLineWidth: 0,
+          title: {
+              text: 'Quality Level',
+              style: {
+                  color: Highcharts.getOptions().colors[1]
+              }
+          },
+          labels: {
+              format: '{value}',
+              style: {
+                  color: Highcharts.getOptions().colors[1]
+              }
+          },
+          opposite: true
+      }],
+      tooltip: {
+          shared: true
+      },
+      // legend: {
+      //     layout: 'vertical',
+      //     align: 'left',
+      //     x: 80,
+      //     verticalAlign: 'top',
+      //     // y: 155,
+      //     floating: true,
+      //     backgroundColor:
+      //         Highcharts.defaultOptions.legend.backgroundColor || // theme
+      //         'rgba(255,255,255,0.25)'
+      // },
+      legend: {
+        align: 'center',
+        verticalAlign: 'bottom',
+        layout: 'horizontal'
+      },
+      series: [{
+          name: 'Playback Start',
+          type: 'column',
+          yAxis: 1,
+          data: monthlyAvgPlayStart,
+          tooltip: {
+              valueSuffix: ' ms'
+          }
+  
+      }, {
+          name: 'Quality Level',
+          type: 'spline',
+          yAxis: 2,
+          data: monthlyAvgQL,
+          marker: {
+              enabled: false
+          },
+          dashStyle: 'shortdot',
+          tooltip: {
+              valueSuffix: ''
+          }
+  
+      }, {
+          name: 'Bitrate',
+          type: 'spline',
+          data: monthlyAvgBitrate,
+          tooltip: {
+              valueSuffix: ' Kbps'
+          }
+      }],
+      responsive: {
+          rules: [{
+              condition: {
+                  maxWidth: 500
+              },
+              chartOptions: {
+                  legend: {
+                      floating: false,
+                      layout: 'horizontal',
+                      align: 'center',
+                      verticalAlign: 'bottom',
+                      x: 0,
+                      y: 0
+                  },
+                  yAxis: [{
+                      labels: {
+                          align: 'right',
+                          x: 0,
+                          y: -6
+                      },
+                      showLastLabel: false
+                  }, {
+                      labels: {
+                          align: 'left',
+                          x: 0,
+                          y: -6
+                      },
+                      showLastLabel: false
+                  }, {
+                      visible: false
+                  }]
+              }
+          }]
+      }
+  });
 
   });
 }
@@ -1529,6 +1782,7 @@ function examineDashPerformance() {
   toggleDASHDropdown()
   // document.getElementById("dashDropdownContainer").style.display = 'block'
   var url = "https://dash.akamaized.net/akamai/bbb_30fps/bbb_30fps.mpd";
+  // var url = "https://cmafref.akamaized.net/cmaf/live-ull/2006350/akambr/out.mpd";
   // var url = "https://customer-f33zs165nr7gyfy4.cloudflarestream.com/6b9e68b07dfee8cc2d116e4c51d6a957/manifest/video.mpd";
   // var url = "https://customer-m033z5x00ks6nunl.cloudflarestream.com/ea95132c15732412d22c1476fa83f27a/manifest/video.mpd";
   var player = dashjs.MediaPlayer().create();
@@ -1557,6 +1811,7 @@ function examineDashPerformance() {
     var timeElapsed = Date.now() - videoRequestedTimestamp;
     console.log(`Video playback started after ${timeElapsed} ms!`)
     chrome.storage.local.set({videoPlaybackDASH: timeElapsed})
+    dashPlaybackStart =  timeElapsed
   });
 
 
@@ -1705,6 +1960,7 @@ var framerateChart = Highcharts.chart('framerateCurrentContainer', {
         })
         var frameRate = currentRep.frameRate;
         var resolution = currentRep.width + 'x' + currentRep.height;
+        var qualityLevel = player.getQualityFor('video')
         // document.getElementById('bufferLevel').innerText = bufferLevel + " secs";
         // document.getElementById('framerate').innerText = frameRate + " fps";
         // document.getElementById('reportedBitrate').innerText = bitrate + " Kbps";
@@ -1712,7 +1968,11 @@ var framerateChart = Highcharts.chart('framerateCurrentContainer', {
         console.log(`BufferLevel=${bufferLevel} secs`)
         console.log(`FrameRate=${frameRate} fps`)
         console.log(`Resolution: ${resolution}`)
-        console.log(`Dropped Frames: ${currentFrameStats.droppedFrames}`)
+        // console.log(`Dropped Frames: ${currentFrameStats.droppedFrames}`)
+        // console.log(`Current Live Latency: ${player.getCurrentLiveLatency()}`)
+        // console.log(`Current Buffer Length: ${player.getBufferLength('video')}`)
+        // console.log(`Current Avg Throughput: ${player.getAverageThroughput('video')}`)
+        console.log(`Current Quality level: ${qualityLevel}`)
         // console.log(`Reported Bitrate=${bitrate} Kbps`)
         // const x = timeInSeconds, // current time
         calc_buffer = bufferLevel;
@@ -1724,6 +1984,7 @@ var framerateChart = Highcharts.chart('framerateCurrentContainer', {
         resolutionHeightArr.push(currentRep.height)
         framerateArr.push(frameRate)
         droppedFramesArr.push(currentFrameStats.droppedFrames)
+        qualityLevelArr.push(qualityLevel)
     }
     if (video.webkitVideoDecodedByteCount !== undefined) {
       var calculatedBitrate = (((video.webkitVideoDecodedByteCount - lastDecodedByteCount) / 1000) * 8);
@@ -1741,6 +2002,9 @@ var framerateChart = Highcharts.chart('framerateCurrentContainer', {
       clearInterval(extractDASHMetrics);
       toggleDASHDropdown()
       document.getElementById('videoPlayer').style.display = 'none'
+      meanQualityLevel = (qualityLevelArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / qualityLevelArr.length)
+      meanBitrate = (bitrateArr.reduce((accumulator, currentValue) => accumulator + currentValue, 0) / bitrateArr.length)
+      console.log(`DASH playback started after ${dashPlaybackStart}`) 
       saveVoDDASHstats()
     }
   }, 1000);

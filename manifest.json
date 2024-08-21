@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "NetMet: Meet your network performance",
-  "description": "Evaluate web browsing and other network performance metrics with this web measurement tool.",
+  "name": "NetMet: Internet Performance Check Tool",
+  "description": "Evaluate internet performance NETwork METrics with this web measurement tool.",
   "homepage_url": "https://github.com/boserohan91/netmet",
-  "version": "2.0",
+  "version": "2.1",
   "permissions": [
     "webRequest",
     "storage",
