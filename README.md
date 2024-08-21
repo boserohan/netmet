@@ -5,7 +5,7 @@
 <br/><br/><br/><br/>
 
 
-# `NetMet`: Meet your network performance
+# `NetMet`: Internet Performance Check Tool
 
 `NetMet` is a chrome extension/plugin capable of deciphering your network performance. This plugin can be installed in any of your chromium based browsers (Google Chrome, Opera, Brave, Edge, etc.). It can observe various web browsing metrics based on the CDN server locations you are connecting to for some of the top websites in your region. Measuring internet speeds has never been easier, with M-Lab speed test already integrated into the plugin. With just one click of a button a 1-minute test gives you all these details which helps to troubleshoot any network issues you're facing. A feature to view past historical measurement data based on which networks you carried out measurements in, is also available, to get a quick overview.
 
@@ -20,6 +20,10 @@ NetMet measures your overall network performance by using the following test sui
 2. Web browsing performance by connecting to landing websites hosted by popular CDN providers.
 
   <img align="center" width="1000" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/browsing.png">
+
+3. Video Streaming performance by fetching video on demand from Akamai DASH servers
+
+  <img align="center" width="1000" src="https://github.com/user-attachments/assets/e74ac8fe-99b0-4a87-b2ff-3494231324e5">
 
 Based on all collected measurements from your network, `NetMet` will calculate a score for suitability of various applications.
 
@@ -47,7 +51,9 @@ Chrome Extension: [Get NetMet from Chrome Web Store](https://chromewebstore.goog
 12. At the end of the speed test the packet loss and latency details are also displayed to the user
 13. Performance metrics are retrieved using M-lab's API for the uplink and downlink speed test during execution
 14. The speed test performance metrics are compiled into a JSON file and sent to our object storage server hosted in TUM campus network
-15. The extension waits till the next periodic popup event, and continues from step 3
+15. After the speed test, a video streaming test over DASH is performed, and relevant metrics are captured using DASH.js API.
+16. The video streaming metrics are compiled into a JSON file and sent to our object storage server hosted in TUM campus network
+17. The extension waits till the next periodic popup event, and continues from step 3
     
 Frequent measurements help us to assess the quality of your connection and various bottlenecks affecting it. 
 NetMet uses [Chrome Developer APIs](https://developer.chrome.com/docs/extensions/reference/api) for running the test and gathering measurement data as mentioned above. The web browsing metrics are captured using browser's Performance API, specifically [Resource Timing](https://developer.mozilla.org/en-US/docs/Web/API/Performance_API/Resource_timing). The speed test integrated into the extension to measure uplink and downlink performance is the [M-Lab speed test](https://speed.measurementlab.net/#/). 
