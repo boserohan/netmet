@@ -418,7 +418,7 @@ function windowCloseTimer() {
 async function getIPGeolocationData() {
 
 
-    var url = 'http://ip-api.com/json/?fields=query,city,as,continentCode'
+    var url = 'http://ip-api.com/json/?fields=query,city,as,continentCode,countryCode,lat,lon,proxy'
     const ipRequest = new Request(url)
     const response = await fetch(ipRequest, {cache: "no-store"})
     const ipJsonDetails = await response.json()
@@ -429,7 +429,14 @@ async function getIPGeolocationData() {
     ipDetails['City']=ipJsonDetails.city
     ipDetails['ISP_AS']=ipJsonDetails.as
     ipDetails['Continent'] = ipJsonDetails.continentCode
+    ipDetails['Country'] = ipJsonDetails.countryCode
+    ipDetails['Latitude'] = ipJsonDetails.lat
+    ipDetails['Longitude'] = ipJsonDetails.lon
+    ipDetails['Proxy'] = ipJsonDetails.proxy
     document.getElementById("ispText").textContent = ipJsonDetails.as
+    if (ipJsonDetails.proxy) {
+      document.getElementById("proxyInfo").style.display = 'block'
+    }
 
     return ipJsonDetails.continentCode
 }
@@ -2019,6 +2026,7 @@ async function testSteps(){
   exBtn.classList.remove("hoverable")
   // document.getElementById('testInProgressText').style.display = 'block';
   document.getElementById("displayHeader").textContent = "Current Overview"
+  document.getElementById("proxyInfo").style.display = 'none'
   document.getElementById('currentMeasurementContainer').style.display = 'none'
   document.getElementById('histMeasurementContainer').style.display = 'none'
   document.getElementById("ispText").textContent = 'N/A'
