@@ -1,6 +1,6 @@
 
-<img align="left" width="200" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/logo.png">
-<img align="right" width="190" src="https://github.com/boserohan91/netmet/assets/58094973/c720b8b0-f8b1-4d39-9bb4-7c2f3c84d5fc">
+<img align="left" width="100" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/logo.png">
+<img align="right" width="90" src="https://github.com/boserohan91/netmet/assets/58094973/c720b8b0-f8b1-4d39-9bb4-7c2f3c84d5fc">
 
 <br/><br/><br/><br/>
 
