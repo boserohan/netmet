@@ -1,5 +1,6 @@
+[![](https://img.shields.io/badge/Chrome-WebStore-blue)](https://chromewebstore.google.com/detail/netmet-internet-performan/oaljpapbocgcgdmpbigllilolfgebhnl)
 
-<img align="left" width="100" src="https://raw.githubusercontent.com/boserohan91/netmet/main/img/logo.png">
+<img align="left" width="90" src="img/logo.png" />
 <img align="right" width="90" src="img/tum-logo.png" />
 <img align="right" width="90" src="img/tud-logo.png" />
 
